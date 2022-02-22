@@ -22,7 +22,7 @@ lint: ## All-in-one linting
 	@echo 'Check for uncommitted changes ...'
 	git diff --exit-code
 
-build: KUBECONFIG = $(KIND_KUBECONFIG)
+build: export KUBECONFIG = $(KIND_KUBECONFIG)
 build: kind-setup
 	helm repo add crossplane https://charts.crossplane.io/stable
 	helm upgrade --install crossplane --create-namespace --namespace crossplane-system crossplane/crossplane --set "args[0]='--debug'" --wait

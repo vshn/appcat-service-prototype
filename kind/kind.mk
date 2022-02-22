@@ -20,12 +20,12 @@ kind-setup: $(KIND_KUBECONFIG) ## Creates the kind cluster
 .PHONY: kind-clean
 kind-clean: export KUBECONFIG = $(KIND_KUBECONFIG)
 kind-clean: ## Removes the kind Cluster
-	@$(KIND) delete cluster --name $(KIND_CLUSTER) || true
+	@$(KIND_CMD) delete cluster --name $(KIND_CLUSTER) || true
 	@rm -rf $(kind_dir)
 
 $(KIND_KUBECONFIG): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(KIND_KUBECONFIG):
-	$(KIND) create cluster \
+	$(KIND_CMD) create cluster \
 		--name $(KIND_CLUSTER) \
 		--image $(KIND_IMAGE) \
 		--config kind/config.yaml

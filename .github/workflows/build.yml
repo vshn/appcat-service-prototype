@@ -8,6 +8,9 @@ on:
     branches:
       - master
 
+env:
+  KIND_CMD: kind # kind is pre-installed in GitHub runners
+
 jobs:
   crossplane:
     runs-on: ubuntu-latest

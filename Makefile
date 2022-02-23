@@ -31,15 +31,23 @@ service-broker: export KUBECONFIG = $(KIND_KUBECONFIG)
 service-broker: kind-setup-ingress
 	kubectl apply -k service-broker
 
-service-redis:
+.service-redis:
 	kubectl apply -f crossplane/composite-redis.yaml
 	kubectl apply -f crossplane/composition-redis-small.yaml
 
-instance-redis: service-redis
+instance-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
+instance-redis: .service-redis
 	kubectl apply -f service/prototype-instance.yaml
 	kubectl wait -n my-app --for condition=Ready RedisInstance.syn.tools/redis1 --timeout 180s
 
-$(kind_dir)/.crossplane-ready: kind-setup
+svcat: export KUBECONFIG = $(KIND_KUBECONFIG)
+svcat: $(kind_dir)/.svcat-ready
+
+$(kind_dir)/svcat-ready:
+	helm repo add service-catalog https://kubernetes-sigs.github.io/service-catalog
+	helm install catalog --create-namespace --namespace catalog service-catalog/catalog --wait
+	@touch $@
+
 $(kind_dir)/crossplane-ready: kind-setup
 	helm repo add crossplane https://charts.crossplane.io/stable
 	helm repo add mittwald https://helm.mittwald.de

@@ -22,10 +22,14 @@ lint: ## All-in-one linting
 	@echo 'Check for uncommitted changes ...'
 	git diff --exit-code
 
-build: export KUBECONFIG = $(KIND_KUBECONFIG)
-build: crossplane-setup instance-redis
+build: crossplane-setup instance-redis service-broker
 
-crossplane-setup: $(kind_dir)/.crossplane-ready
+crossplane-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
+crossplane-setup: $(kind_dir)/crossplane-ready
+
+service-broker: export KUBECONFIG = $(KIND_KUBECONFIG)
+service-broker: kind-setup-ingress
+	kubectl apply -k service-broker
 
 service-redis:
 	kubectl apply -f crossplane/composite-redis.yaml
@@ -36,6 +40,7 @@ instance-redis: service-redis
 	kubectl wait -n my-app --for condition=Ready RedisInstance.syn.tools/redis1 --timeout 180s
 
 $(kind_dir)/.crossplane-ready: kind-setup
+$(kind_dir)/crossplane-ready: kind-setup
 	helm repo add crossplane https://charts.crossplane.io/stable
 	helm repo add mittwald https://helm.mittwald.de
 	helm upgrade --install crossplane --create-namespace --namespace crossplane-system crossplane/crossplane --set "args[0]='--debug'" --wait
@@ -44,6 +49,6 @@ $(kind_dir)/.crossplane-ready: kind-setup
 	kubectl wait --for condition=Healthy provider.pkg.crossplane.io/provider-helm --timeout 60s
 	kubectl apply -f crossplane/provider-config.yaml
 	kubectl create clusterrolebinding crossplane:provider-helm-admin --clusterrole cluster-admin --serviceaccount crossplane-system:$$(kubectl get sa -n crossplane-system -o custom-columns=NAME:.metadata.name --no-headers | grep provider-helm)
-	@touch $(kind_dir)/.crossplane-ready
+	@touch $@
 
 clean: kind-clean

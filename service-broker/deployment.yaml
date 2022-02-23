@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: service-broker-redis
+  name: service-broker-redis
+spec:
+  minReadySeconds: 30
+  replicas: 1
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:
+        name: service-broker-redis
+    spec:
+      containers:
+        - args: []
+          env:
+            - name: OSB_SERVICE_IDS
+              value: redis-k8s
+            - name: OSB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: broker-creds
+                  key: username
+            - name: OSB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: broker-creds
+                  key: password
+            - name: OSB_NAMESPACE
+              value: crossplane-system
+          image: docker.io/vshn/crossplane-service-broker:v0.3.0
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 2
+          name: service-broker
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 200m
+              memory: 64Mi
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      serviceAccountName: service-broker

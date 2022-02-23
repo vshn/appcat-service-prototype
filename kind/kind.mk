@@ -8,10 +8,12 @@ kind: kind-setup ## All-in-one kind target
 kind-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
 kind-setup: $(KIND_KUBECONFIG) ## Creates the kind cluster
 
-# .PHONY: kind-setup-ingress
-# kind-setup-ingress: export KUBECONFIG = $(KIND_KUBECONFIG)
-# kind-setup-ingress: kind-setup ### Install NGINX as ingress controller onto kind cluster (localhost:8081)
-# 	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+.PHONY: kind-setup-ingress
+kind-setup-ingress: export KUBECONFIG = $(KIND_KUBECONFIG)
+kind-setup-ingress: kind-setup ### Install NGINX as ingress controller onto kind cluster (localhost:8081 / localhost:8443)
+	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+	kubectl wait -n ingress-nginx --for condition=Complete jobs/ingress-nginx-admission-patch --timeout 180s
+	kubectl wait -n ingress-nginx --for condition=ContainersReady --timeout 180s $$(kubectl -n ingress-nginx get pods -o name --no-headers | grep controller)
 
 # .PHONY: kind-load-image
 # kind-load-image: kind-setup build-docker ### Load the container image onto kind cluster
@@ -21,7 +23,7 @@ kind-setup: $(KIND_KUBECONFIG) ## Creates the kind cluster
 kind-clean: export KUBECONFIG = $(KIND_KUBECONFIG)
 kind-clean: ## Removes the kind Cluster
 	@$(KIND_CMD) delete cluster --name $(KIND_CLUSTER) || true
-	@rm -rf $(kind_dir)
+	@rm -rf $(kind_dir)/*
 
 $(KIND_KUBECONFIG): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(KIND_KUBECONFIG):

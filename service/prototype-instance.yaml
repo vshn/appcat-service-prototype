@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-app
+---
+apiVersion: syn.tools/v1
+kind: RedisInstance
+metadata:
+  name: redis1
+  namespace: my-app
+  labels:
+    service.syn.tools/cluster: appc-service1
+    service.syn.tools/plan: small
+spec:
+  compositionRef:
+    name: redis-small

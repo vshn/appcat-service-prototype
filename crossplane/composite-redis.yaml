@@ -1,0 +1,40 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  annotations:
+    service.syn.tools/description: Redis key value store
+    service.syn.tools/metadata: |
+      {
+        "displayName": "Redis",
+        "documentationUrl": "https://kb.vshn.ch/app-catalog/redis.html",
+        "shareable": true,
+        "version": "6.0.10"
+      }
+    service.syn.tools/tags: |
+      ["redis"]
+  labels:
+    service.syn.tools/id: redis-k8s
+    service.syn.tools/name: redis-k8s
+    service.syn.tools/updatable: "true"
+  name: redisinstances.syn.tools
+spec:
+  connectionSecretKeys:
+    - endpoint
+    - port
+    - sentinelPort
+    - password
+  group: syn.tools
+  names:
+    kind: RedisInstance
+    plural: redisinstances
+  versions:
+    - additionalPrinterColumns:
+        - jsonPath: .metadata.labels['service\.syn\.tools/plan']
+          name: Plan
+          type: string
+        # - jsonPath: .metadata.labels['service\.syn\.tools/cluster']
+        #   name: Cluster
+        #   type: string
+      name: v1
+      referenceable: true
+      served: true

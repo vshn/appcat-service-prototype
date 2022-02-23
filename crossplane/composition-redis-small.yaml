@@ -1,0 +1,129 @@
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  annotations:
+    service.syn.tools/description: Redis Instance small
+    service.syn.tools/metadata: |
+      {
+        "bullets": [
+          "powered by VSHN"
+        ],
+        "dedicatedService": true,
+        "displayName": "Small",
+        "highAvailability": false,
+        "max_databases": "16",
+        "memory": "1Gi",
+        "shareable": true,
+        "storageCapacity": "8Gi"
+      }
+  labels:
+    service.syn.tools/cluster: appc-service1
+    service.syn.tools/id: redis-k8s
+    service.syn.tools/name: redis-k8s
+    service.syn.tools/plan: small
+    service.syn.tools/updatable: "true"
+  name: redis-small
+spec:
+  compositeTypeRef:
+    apiVersion: syn.tools/v1
+    kind: RedisInstance
+  writeConnectionSecretsToNamespace: crossplane-system
+  resources:
+    - base:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          annotations:
+            secret-generator.v1.mittwald.de/autogenerate: password
+      patches:
+        - fromFieldPath: spec.writeConnectionSecretToRef.namespace
+          toFieldPath: metadata.namespace
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: metadata.name
+          transforms:
+            - string:
+                fmt: "%s-password"
+              type: string
+      readinessChecks:
+        - type: None
+    - connectionDetails:
+        - fromConnectionSecretKey: endpoint
+        - fromConnectionSecretKey: port
+        - fromConnectionSecretKey: password
+        - name: sentinelPort
+          value: "26379"
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: Release
+        spec:
+          connectionDetails:
+            - apiVersion: v1
+              kind: Service
+              name: redis-master
+              fieldPath: spec.clusterIP
+              toConnectionSecretKey: endpoint
+            - apiVersion: v1
+              kind: Service
+              name: redis-master
+              fieldPath: spec.ports[0].port
+              toConnectionSecretKey: port
+            - apiVersion: v1
+              kind: Secret
+              name: redis
+              fieldPath: data.redis-password
+              toConnectionSecretKey: password
+          writeConnectionSecretToRef:
+            namespace: crossplane-system
+          forProvider:
+            wait: true
+            chart:
+              name: redis
+              repository: https://charts.bitnami.com/bitnami
+              version: 12.9.0
+            set:
+              - name: password
+                valueFrom:
+                  secretKeyRef:
+                    key: password
+                    namespace: crossplane-system
+            values:
+              cluster:
+                enabled: false
+                slaveCount: 0
+              fullnameOverride: redis
+              master:
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 500Mi
+                  requests:
+                    cpu: 100m
+                    memory: 128Mi
+          reclaimPolicy: Delete
+          rollbackLimit: 3
+      patches:
+        - fromFieldPath: metadata.labels
+        - fromFieldPath: metadata.annotations
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.forProvider.namespace
+        - fromFieldPath: metadata.labels[service.syn.tools/cluster]
+          toFieldPath: spec.providerConfigRef.name
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.forProvider.set[0].valueFrom.secretKeyRef.name
+          transforms:
+            - string:
+                fmt: "%s-password"
+              type: string
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          transforms:
+            - string:
+                fmt: "%s-redis"
+              type: string
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.connectionDetails[0].namespace
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.connectionDetails[1].namespace
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.connectionDetails[2].namespace

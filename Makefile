@@ -33,6 +33,7 @@ service-redis:
 
 instance-redis: service-redis
 	kubectl apply -f service/prototype-instance.yaml
+	kubectl wait -n my-app --for condition=Ready RedisInstance.syn.tools/redis1 --timeout 180s
 
 $(kind_dir)/.crossplane-ready: kind-setup
 	helm repo add crossplane https://charts.crossplane.io/stable
@@ -40,8 +41,9 @@ $(kind_dir)/.crossplane-ready: kind-setup
 	helm upgrade --install crossplane --create-namespace --namespace crossplane-system crossplane/crossplane --set "args[0]='--debug'" --wait
 	helm upgrade --install secret-generator --create-namespace --namespace secret-generator mittwald/kubernetes-secret-generator --wait
 	kubectl apply -f crossplane/provider.yaml
+	kubectl wait --for condition=Healthy provider.pkg.crossplane.io/provider-helm --timeout 60s
 	kubectl apply -f crossplane/provider-config.yaml
-	kubectl create clusterrolebinding crossplane:provider-helm-admin --clusterrole cluster-admin --serviceaccount crossplane-system:$(shell kubectl get sa -n crossplane-system -o custom-columns=NAME:.metadata.name --no-headers | grep provider-helm)
+	kubectl create clusterrolebinding crossplane:provider-helm-admin --clusterrole cluster-admin --serviceaccount crossplane-system:$$(kubectl get sa -n crossplane-system -o custom-columns=NAME:.metadata.name --no-headers | grep provider-helm)
 	@touch $(kind_dir)/.crossplane-ready
 
 clean: kind-clean

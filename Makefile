@@ -29,7 +29,7 @@ crossplane-setup: $(kind_dir)/crossplane-ready
 
 .service-redis:
 	kubectl apply -f crossplane/composite-redis.yaml
-	kubectl apply -f crossplane/composition-redis-small.yaml
+	kubectl apply -f crossplane/composition-redis.yaml
 
 provision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
 provision-redis: .service-redis

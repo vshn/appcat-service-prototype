@@ -16,7 +16,7 @@ metadata:
     service.syn.tools/id: redis-k8s
     service.syn.tools/name: redis-k8s
     service.syn.tools/updatable: "true"
-  name: redisinstances.syn.tools
+  name: xredisinstances.syn.tools
 spec:
   connectionSecretKeys:
     - endpoint
@@ -25,16 +25,37 @@ spec:
     - password
   group: syn.tools
   names:
+    kind: XRedisInstance
+    plural: xredisinstances
+  claimNames:
     kind: RedisInstance
     plural: redisinstances
+  defaultCompositionRef:
+    name: redis
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .metadata.labels['service\.syn\.tools/plan']
-          name: Plan
-          type: string
+    - #additionalPrinterColumns:
+        # - jsonPath: .metadata.labels['service\.syn\.tools/plan']
+        #   name: Plan
+        #   type: string
         # - jsonPath: .metadata.labels['service\.syn\.tools/cluster']
         #   name: Cluster
         #   type: string
       name: v1
       referenceable: true
       served: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                parameters:
+                  type: object
+                  properties:
+                    storageSize:
+                      type: string
+                  required:
+                  - storageSize
+              required:
+              - parameters

@@ -3,31 +3,27 @@ apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
   annotations:
-    service.syn.tools/description: Redis Instance small
+    service.syn.tools/description: Redis Instance
     service.syn.tools/metadata: |
       {
         "bullets": [
           "powered by VSHN"
         ],
         "dedicatedService": true,
-        "displayName": "Small",
         "highAvailability": false,
         "max_databases": "16",
-        "memory": "1Gi",
-        "shareable": true,
-        "storageCapacity": "8Gi"
+        "shareable": true
       }
   labels:
     service.syn.tools/cluster: appc-service1
     service.syn.tools/id: redis-k8s
     service.syn.tools/name: redis-k8s
-    service.syn.tools/plan: small
     service.syn.tools/updatable: "true"
-  name: redis-small
+  name: redis
 spec:
   compositeTypeRef:
     apiVersion: syn.tools/v1
-    kind: RedisInstance
+    kind: XRedisInstance
   writeConnectionSecretsToNamespace: crossplane-system
   resources:
     - base:
@@ -73,8 +69,10 @@ spec:
               name: redis
               fieldPath: data.redis-password
               toConnectionSecretKey: password
-          writeConnectionSecretToRef:
-            namespace: crossplane-system
+          #writeConnectionSecretToRef:
+            #namespace: crossplane-system
+          providerConfigRef:
+            name: appc-service1
           forProvider:
             wait: true
             chart:
@@ -107,20 +105,20 @@ spec:
         - fromFieldPath: metadata.annotations
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.forProvider.namespace
-        - fromFieldPath: metadata.labels[service.syn.tools/cluster]
-          toFieldPath: spec.providerConfigRef.name
+        # - fromFieldPath: metadata.labels[service.syn.tools/cluster]
+        #   toFieldPath: spec.providerConfigRef.name
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.forProvider.set[0].valueFrom.secretKeyRef.name
           transforms:
             - string:
                 fmt: "%s-password"
               type: string
-        - fromFieldPath: metadata.labels[crossplane.io/composite]
-          toFieldPath: spec.writeConnectionSecretToRef.name
-          transforms:
-            - string:
-                fmt: "%s-redis"
-              type: string
+        # - fromFieldPath: metadata.labels[crossplane.io/composite]
+        #   toFieldPath: spec.writeConnectionSecretToRef.name
+        #   transforms:
+        #     - string:
+        #         fmt: "%s-redis"
+        #       type: string
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.connectionDetails[0].namespace
         - fromFieldPath: metadata.labels[crossplane.io/composite]

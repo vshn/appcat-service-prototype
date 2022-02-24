@@ -9,9 +9,8 @@ kind: RedisInstance
 metadata:
   name: redis1
   namespace: my-app
-  labels:
-    service.syn.tools/cluster: appc-service1
-    service.syn.tools/plan: small
 spec:
-  compositionRef:
-    name: redis-small
+  parameters:
+    storageSize: 8Gi
+  writeConnectionSecretToRef:
+    name: my-redis-details

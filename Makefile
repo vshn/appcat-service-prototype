@@ -22,31 +22,19 @@ lint: ## All-in-one linting
 	@echo 'Check for uncommitted changes ...'
 	git diff --exit-code
 
-build: crossplane-setup instance-redis service-broker
+build: crossplane-setup provision-redis
 
 crossplane-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
 crossplane-setup: $(kind_dir)/crossplane-ready
-
-service-broker: export KUBECONFIG = $(KIND_KUBECONFIG)
-service-broker: kind-setup-ingress
-	kubectl apply -k service-broker
 
 .service-redis:
 	kubectl apply -f crossplane/composite-redis.yaml
 	kubectl apply -f crossplane/composition-redis-small.yaml
 
-instance-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
-instance-redis: .service-redis
+provision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
+provision-redis: .service-redis
 	kubectl apply -f service/prototype-instance.yaml
 	kubectl wait -n my-app --for condition=Ready RedisInstance.syn.tools/redis1 --timeout 180s
-
-svcat: export KUBECONFIG = $(KIND_KUBECONFIG)
-svcat: $(kind_dir)/.svcat-ready
-
-$(kind_dir)/svcat-ready:
-	helm repo add service-catalog https://kubernetes-sigs.github.io/service-catalog
-	helm install catalog --create-namespace --namespace catalog service-catalog/catalog --wait
-	@touch $@
 
 $(kind_dir)/crossplane-ready: kind-setup
 	helm repo add crossplane https://charts.crossplane.io/stable

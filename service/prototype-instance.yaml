@@ -12,5 +12,5 @@ metadata:
 spec:
   parameters:
     storageSize: 8Gi
-  writeConnectionSecretToRef:
-    name: my-redis-details
+  # writeConnectionSecretToRef:
+  #   name: my-redis-details

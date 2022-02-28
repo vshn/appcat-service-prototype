@@ -33,10 +33,10 @@ spec:
   defaultCompositionRef:
     name: redis
   versions:
-    - #additionalPrinterColumns:
-        # - jsonPath: .metadata.labels['service\.syn\.tools/plan']
-        #   name: Plan
-        #   type: string
+    - additionalPrinterColumns:
+        - jsonPath: .spec.parameters.storageSize
+          name: Storage
+          type: string
         # - jsonPath: .metadata.labels['service\.syn\.tools/cluster']
         #   name: Cluster
         #   type: string
@@ -54,8 +54,10 @@ spec:
                   type: object
                   properties:
                     storageSize:
+                      # we may need to use integer so that a policy engine can compare sizes and enforce a minimum and maximum size,
+                      # unless policy engine supports unit suffixes like "Gi".
                       type: string
                   required:
-                  - storageSize
+                    - storageSize
               required:
-              - parameters
+                - parameters

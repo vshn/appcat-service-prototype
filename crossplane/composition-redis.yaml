@@ -96,6 +96,8 @@ spec:
                 slaveCount: 0
               fullnameOverride: redis
               master:
+                persistence:
+                  size: "8Gi" # patched from instance
                 resources:
                   limits:
                     cpu: 500m
@@ -122,6 +124,8 @@ spec:
             - type: string
               string:
                 fmt: "%s-credentials"
+        - fromFieldPath: spec.parameters.storageSize
+          toFieldPath: spec.forProvider.values.master.persistence.size
         - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
           toFieldPath: spec.writeConnectionSecretToRef.namespace
         - fromFieldPath: metadata.labels[crossplane.io/composite]

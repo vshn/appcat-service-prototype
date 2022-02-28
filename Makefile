@@ -27,7 +27,7 @@ build: crossplane-setup provision-redis
 crossplane-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
 crossplane-setup: $(kind_dir)/crossplane-ready
 
-.service-redis:
+.service-redis: crossplane-setup
 	kubectl apply -f crossplane/composite-redis.yaml
 	kubectl apply -f crossplane/composition-redis.yaml
 
@@ -35,6 +35,10 @@ provision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
 provision-redis: .service-redis
 	kubectl apply -f service/prototype-instance.yaml
 	kubectl wait -n my-app --for condition=Ready RedisInstance.syn.tools/redis1 --timeout 180s
+
+deprovision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
+deprovision-redis: kind-setup
+	kubectl delete -f service/prototype-instance.yaml --ignore-not-found
 
 $(kind_dir)/crossplane-ready: kind-setup
 	helm repo add crossplane https://charts.crossplane.io/stable

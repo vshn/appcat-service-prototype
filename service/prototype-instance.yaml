@@ -11,6 +11,6 @@ metadata:
   namespace: my-app
 spec:
   parameters:
-    storageSize: 8Gi
+    storageSize: 10Gi
   # writeConnectionSecretToRef:
   #   name: my-redis-details

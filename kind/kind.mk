@@ -2,7 +2,7 @@ kind_dir ?= .kind
 
 .PHONY: kind
 kind: export KUBECONFIG = $(KIND_KUBECONFIG)
-kind: kind-setup ## All-in-one kind target
+kind: kind-setup-ingress ## All-in-one kind target
 
 .PHONY: kind-setup
 kind-setup: export KUBECONFIG = $(KIND_KUBECONFIG)

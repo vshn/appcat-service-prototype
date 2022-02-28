@@ -1,5 +1,5 @@
-
 ## These are some common variables for Make
+crossplane_marker = $(kind_dir)/crossplane-ready
 
 PROJECT_ROOT_DIR = .
 # TODO: Adjust project meta

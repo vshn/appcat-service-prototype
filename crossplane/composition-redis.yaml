@@ -111,8 +111,6 @@ spec:
         - fromFieldPath: metadata.labels
         - fromFieldPath: metadata.annotations
         - fromFieldPath: metadata.labels[crossplane.io/composite]
-          toFieldPath: spec.forProvider.namespace
-        - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.forProvider.set[0].valueFrom.secretKeyRef.name
           transforms:
             - string:
@@ -124,8 +122,25 @@ spec:
             - type: string
               string:
                 fmt: "%s-credentials"
+        # Parameter patches
         - fromFieldPath: spec.parameters.storageSize
           toFieldPath: spec.forProvider.values.master.persistence.size
+        # - fromFieldPath: spec.parameters.resources
+        #   toFieldPath: spec.forProvider.values.master.resources
+        #   policy:
+        #     mergeOptions:
+        #       keepMapValues: true # this doesn't work for resources (they're not a map at this level)
+        - fromFieldPath: spec.parameters.resources.limits.memory
+          toFieldPath: spec.forProvider.values.master.resources.limits.memory
+        - fromFieldPath: spec.parameters.resources.requests.memory
+          toFieldPath: spec.forProvider.values.master.resources.requests.memory
+        - fromFieldPath: spec.parameters.resources.limits.cpu
+          toFieldPath: spec.forProvider.values.master.resources.limits.cpu
+        - fromFieldPath: spec.parameters.resources.requests.cpu
+          toFieldPath: spec.forProvider.values.master.resources.requests.cpu
+        # Namespace patches
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.forProvider.namespace
         - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
           toFieldPath: spec.writeConnectionSecretToRef.namespace
         - fromFieldPath: metadata.labels[crossplane.io/composite]

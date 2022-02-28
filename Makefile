@@ -24,8 +24,8 @@ lint: ## All-in-one linting
 
 build: crossplane-setup provision-redis
 
-crossplane-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
-crossplane-setup: $(kind_dir)/crossplane-ready
+.PHONY: crossplane-setup
+crossplane-setup: $(crossplane_marker)
 
 .service-redis: crossplane-setup
 	kubectl apply -f crossplane/composite-redis.yaml
@@ -40,7 +40,8 @@ deprovision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
 deprovision-redis: kind-setup
 	kubectl delete -f service/prototype-instance.yaml --ignore-not-found
 
-$(kind_dir)/crossplane-ready: kind-setup
+$(crossplane_marker): export KUBECONFIG = $(KIND_KUBECONFIG)
+$(crossplane_marker): $(KIND_KUBECONFIG)
 	helm repo add crossplane https://charts.crossplane.io/stable
 	helm repo add mittwald https://helm.mittwald.de
 	helm upgrade --install crossplane --create-namespace --namespace crossplane-system crossplane/crossplane --set "args[0]='--debug'" --wait

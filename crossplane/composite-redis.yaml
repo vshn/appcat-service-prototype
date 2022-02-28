@@ -57,6 +57,33 @@ spec:
                       # we may need to use integer so that a policy engine can compare sizes and enforce a minimum and maximum size,
                       # unless policy engine supports unit suffixes like "Gi".
                       type: string
+                    resources:
+                      description: Resources describes the compute resource requirements
+                        (cpu, memory, etc.)
+                      properties:
+                        limits:
+                          additionalProperties:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          description: 'Limits describes the maximum amount of compute resources
+                            allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          type: object
+                        requests:
+                          additionalProperties:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          description: 'Requests describes the minimum amount of compute
+                            resources required. If Requests is omitted for a container,
+                            it defaults to Limits if that is explicitly specified, otherwise
+                            to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          type: object
+                      type: object
                   required:
                     - storageSize
               required:

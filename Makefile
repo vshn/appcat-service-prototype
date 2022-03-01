@@ -29,6 +29,7 @@ crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and
 .service-definition: crossplane-setup
 	kubectl apply -f crossplane/composite.yaml
 	kubectl apply -f crossplane/composition.yaml
+	kubectl wait --for condition=Offered compositeresourcedefinition/xredisinstances.syn.tools
 
 .PHONY: provision
 provision: export KUBECONFIG = $(KIND_KUBECONFIG)

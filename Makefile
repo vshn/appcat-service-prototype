@@ -50,7 +50,7 @@ $(crossplane_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(crossplane_sentinel): $(KIND_KUBECONFIG)
 	helm repo add crossplane https://charts.crossplane.io/stable
 	helm repo add mittwald https://helm.mittwald.de
-	helm upgrade --install crossplane --create-namespace --namespace crossplane-system crossplane/crossplane --set "args[0]='--debug'" --wait
+	helm upgrade --install crossplane --create-namespace --namespace crossplane-system crossplane/crossplane --set "args[0]='--debug'" --set "args[1]='--enable-composition-revisions'" --wait
 	helm upgrade --install secret-generator --create-namespace --namespace secret-generator mittwald/kubernetes-secret-generator --wait
 	kubectl apply -f crossplane/provider.yaml
 	kubectl wait --for condition=Healthy provider.pkg.crossplane.io/provider-helm --timeout 60s

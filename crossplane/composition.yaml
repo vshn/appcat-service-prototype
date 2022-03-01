@@ -123,7 +123,7 @@ spec:
               string:
                 fmt: "%s-credentials"
         # Parameter patches
-        - fromFieldPath: spec.parameters.storageSize
+        - fromFieldPath: spec.parameters.resources.storageSize
           toFieldPath: spec.forProvider.values.master.persistence.size
         # - fromFieldPath: spec.parameters.resources
         #   toFieldPath: spec.forProvider.values.master.resources
@@ -138,6 +138,18 @@ spec:
           toFieldPath: spec.forProvider.values.master.resources.limits.cpu
         - fromFieldPath: spec.parameters.resources.requests.cpu
           toFieldPath: spec.forProvider.values.master.resources.requests.cpu
+        # Update policy
+        - fromFieldPath: spec.parameters.updatePolicy.version
+          toFieldPath: spec.forProvider.chart.version
+          transforms:
+            - type: map
+              map:
+                stable: 12.9.1
+                edge: 12.9.2
+                stable-6: 12.9.1 # '6' refers to Redis major version
+                # Simulating an older Redis version.
+                # If removed from the map, instances that use this version become unready, unless they pin the composition revision and set `compositionUpdatePolicy=Manual`
+                stable-5: 12.9.0
         # Namespace patches
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.forProvider.namespace

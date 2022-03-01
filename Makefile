@@ -22,28 +22,31 @@ lint: ## All-in-one linting
 	@echo 'Check for uncommitted changes ...'
 	git diff --exit-code
 
-build: crossplane-setup provision-redis
-
 .PHONY: crossplane-setup
-crossplane-setup: $(crossplane_marker)
+crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and install Crossplane
 
-.service-redis: crossplane-setup
-	kubectl apply -f crossplane/composite-redis.yaml
-	kubectl apply -f crossplane/composition-redis.yaml
+.PHONY: .service-definition
+.service-definition: crossplane-setup
+	kubectl apply -f crossplane/composite.yaml
+	kubectl apply -f crossplane/composition.yaml
 
-provision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
-provision-redis: .service-redis
+.PHONY: provision
+provision: export KUBECONFIG = $(KIND_KUBECONFIG)
+provision: .service-definition ## Install local Kubernetes cluster and provision the service instance
 	kubectl apply -f service/prototype-instance.yaml
 	kubectl wait -n my-app --for condition=Ready RedisInstance.syn.tools/redis1 --timeout 180s
 	kubectl apply -f service/test-job.yaml
 	kubectl wait -n my-app --for condition=Complete job/service-connection-verify
 
-deprovision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
-deprovision-redis: kind-setup
-	kubectl delete -f service/prototype-instance.yaml --ignore-not-found
+.PHONY: deprovision
+deprovision: export KUBECONFIG = $(KIND_KUBECONFIG)
+deprovision: kind-setup ## Uninstall the service instance
+	ns=$$(kubectl -n my-app get RedisInstance.syn.tools redis1 -o jsonpath={.spec.resourceRef.name}) && \
+	kubectl delete -f service/prototype-instance.yaml && \
+	kubectl delete ns $${ns}
 
-$(crossplane_marker): export KUBECONFIG = $(KIND_KUBECONFIG)
-$(crossplane_marker): $(KIND_KUBECONFIG)
+$(crossplane_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
+$(crossplane_sentinel): $(KIND_KUBECONFIG)
 	helm repo add crossplane https://charts.crossplane.io/stable
 	helm repo add mittwald https://helm.mittwald.de
 	helm upgrade --install crossplane --create-namespace --namespace crossplane-system crossplane/crossplane --set "args[0]='--debug'" --wait
@@ -54,4 +57,5 @@ $(crossplane_marker): $(KIND_KUBECONFIG)
 	kubectl create clusterrolebinding crossplane:provider-helm-admin --clusterrole cluster-admin --serviceaccount crossplane-system:$$(kubectl get sa -n crossplane-system -o custom-columns=NAME:.metadata.name --no-headers | grep provider-helm)
 	@touch $@
 
-clean: kind-clean
+.PHONY: clean
+clean: kind-clean ## Clean up local dev environment

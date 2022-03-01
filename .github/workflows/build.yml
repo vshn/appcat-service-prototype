@@ -17,5 +17,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run build
-        run: make build
+      - name: Run provision
+        run: make provision

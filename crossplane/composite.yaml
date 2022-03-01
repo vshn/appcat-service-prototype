@@ -37,9 +37,6 @@ spec:
         - jsonPath: .spec.parameters.storageSize
           name: Storage
           type: string
-        # - jsonPath: .metadata.labels['service\.syn\.tools/cluster']
-        #   name: Cluster
-        #   type: string
       name: v1
       referenceable: true
       served: true

@@ -35,6 +35,8 @@ provision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
 provision-redis: .service-redis
 	kubectl apply -f service/prototype-instance.yaml
 	kubectl wait -n my-app --for condition=Ready RedisInstance.syn.tools/redis1 --timeout 180s
+	kubectl apply -f service/test-job.yaml
+	kubectl wait -n my-app --for condition=Complete job/service-connection-verify
 
 deprovision-redis: export KUBECONFIG = $(KIND_KUBECONFIG)
 deprovision-redis: kind-setup

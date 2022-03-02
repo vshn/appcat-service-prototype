@@ -44,7 +44,7 @@ deprovision: export KUBECONFIG = $(KIND_KUBECONFIG)
 deprovision: kind-setup ## Uninstall the service instance
 	ns=$$(kubectl -n my-app get RedisInstance.syn.tools redis1 -o jsonpath={.spec.resourceRef.name}) && \
 	kubectl delete -f service/prototype-instance.yaml && \
-	kubectl delete ns $${ns}
+	kubectl delete ns "sv-redis-$${ns}"
 
 $(crossplane_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(crossplane_sentinel): $(KIND_KUBECONFIG)

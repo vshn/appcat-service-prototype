@@ -153,11 +153,27 @@ spec:
         # Namespace patches
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.forProvider.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
         - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
           toFieldPath: spec.writeConnectionSecretToRef.namespace
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.connectionDetails[0].namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.connectionDetails[1].namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.connectionDetails[2].namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"

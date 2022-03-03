@@ -1,0 +1,69 @@
+= API Specification
+
+The following Kubernetes example depicts the available parameters for customization.
+
+.RedisInstance specification with default values
+[source,yaml]
+----
+apiVersion: syn.tools/v1
+kind: RedisInstance
+metadata:
+  name: my-redis
+spec:
+  parameters:
+    resources:
+      storageSize: 5Gi <1>
+      requests:
+        memory: 256Mi <2>
+        cpu: 30m <3>
+      limits:
+        memory: 1Gi <4>
+        cpu: "1" <5>
+    updatePolicy:
+      version: stable-6 <6>
+----
+<1> Requested storage size
+<2> Memory request
+<3> CPU request
+<4> Memory limit
+<5> CPU limit
+<6> Major version of Redis *
+
+`*`: Required value
+
+// validation like minimum size currently not implemented (needs policy engine)
+== `resources`
+
+[%header,cols=3*]
+|===
+|Parameter name
+|Minimum
+|Maximum
+
+|`storageSize`
+|`1Gi`
+|`100Gi`
+
+|`requests.memory`
+|`128Mi`
+|`4Gi`
+
+|`limits.memory`
+|`256Mi`
+|`6Gi`
+
+|`requests.cpu`
+|`30m`
+|`2000m`
+
+|`limits.cpu`
+|`100m`
+|`4000m`
+|===
+
+== `updatePolicy.version`
+
+Supported values::
+. `latest`: Latest Redis version
+. `stable-v6`: Redis major version `v6.2` with latest minor and patch version.
+. `stable-v5`: Redis major version `v5.0` with latest minor and patch version.

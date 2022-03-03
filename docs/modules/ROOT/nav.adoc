@@ -8,7 +8,7 @@
 //* xref:how-tos/example.adoc[Example How-To]
 
 .Technical reference
-//* xref:references/example.adoc[Example Reference]
+* xref:references/api-spec.adoc[API Specification]
 
 .Explanation
 //* xref:explanations/example.adoc[Example Explanation]

@@ -11,4 +11,5 @@
 * xref:references/api-spec.adoc[API Specification]
 
 .Explanation
-//* xref:explanations/example.adoc[Example Explanation]
+* xref:explanations/features.adoc[Features]
+* xref:explanations/sli.adoc[Service Level Indicators]

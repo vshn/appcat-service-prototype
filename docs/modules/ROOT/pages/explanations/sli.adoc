@@ -1,0 +1,30 @@
+= Service Level Indicators
+
+This page explains and defines Service Level Indicators (SLI) that are being measured continuously by the platform.
+
+== SLI: Uptime
+
+Uptime conditions::
+- Redis responds to 95% of "ping" requests within a 1-minute interval.
+  The requests are originating from within the same cluster.
+
+Down conditions::
+- Redis is not responding to "ping" requests within a 1-minute interval.
++
+Instances in downtime clearly caused by customer error or abuse do not count towards downtime in SLAs.
+
+== SLI: Health
+
+Degraded conditions::
+- Redis responds between 1% and 95% of "ping" requests within a 1-minute interval.
+- The configured storage volume is full.
+- Redis continues to serve read operations, but denies write operations.
+- Instance is being automatically updated to a minor or patch version.
+- Instance is being manually upgraded to a major version.
+- The platform itself is in maintenance mode and causes maintenance-related downtimes (for example Node drains).
+
+Degraded instances do not count towards downtime in SLAs.
+
+== SLI: Backup
+
+TBD

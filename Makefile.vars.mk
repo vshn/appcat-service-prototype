@@ -2,7 +2,6 @@
 crossplane_sentinel = $(kind_dir)/crossplane-sentinel
 
 PROJECT_ROOT_DIR = .
-# TODO: Adjust project meta
 PROJECT_NAME ?= appcat-service-prototype
 PROJECT_OWNER ?= vshn
 

@@ -1,0 +1,179 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crossplane-redis
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  annotations:
+    service.syn.tools/description: Redis Instance
+    service.syn.tools/metadata: |
+      {
+        "bullets": [
+          "powered by VSHN"
+        ],
+        "dedicatedService": true,
+        "highAvailability": false,
+        "max_databases": "16",
+        "shareable": true
+      }
+  labels:
+    service.syn.tools/cluster: appc-service1
+    service.syn.tools/id: redis-k8s
+    service.syn.tools/name: redis-k8s
+    service.syn.tools/updatable: "true"
+  name: redis
+spec:
+  compositeTypeRef:
+    apiVersion: syn.tools/v1
+    kind: XRedisInstance
+  writeConnectionSecretsToNamespace: crossplane-redis
+  resources:
+    - base:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          annotations:
+            secret-generator.v1.mittwald.de/autogenerate: password
+      patches:
+        - fromFieldPath: spec.writeConnectionSecretToRef.namespace
+          toFieldPath: metadata.namespace
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: metadata.name
+          transforms:
+            - string:
+                fmt: "%s-password"
+              type: string
+      readinessChecks:
+        - type: None
+    - connectionDetails:
+        - fromConnectionSecretKey: endpoint
+        - fromConnectionSecretKey: port
+        - fromConnectionSecretKey: password
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: Release
+        spec:
+          connectionDetails:
+            - apiVersion: v1
+              kind: Service
+              name: redis-master
+              fieldPath: spec.clusterIP
+              toConnectionSecretKey: endpoint
+            - apiVersion: v1
+              kind: Service
+              name: redis-master
+              fieldPath: spec.ports[0].port
+              toConnectionSecretKey: port
+            - apiVersion: v1
+              kind: Secret
+              name: redis
+              fieldPath: data.redis-password
+              toConnectionSecretKey: password
+          writeConnectionSecretToRef:
+            name: ""      # patched from instance name
+            namespace: "" # patched from instance namespace
+          providerConfigRef:
+            name: appc-service1
+          forProvider:
+            wait: true
+            chart:
+              name: redis
+              repository: https://charts.bitnami.com/bitnami
+              version: 12.9.0
+            set:
+              - name: password
+                valueFrom:
+                  secretKeyRef:
+                    key: password
+                    name: "" # patched from instance name
+                    namespace: crossplane-redis
+            values:
+              cluster:
+                enabled: false
+                slaveCount: 0
+              fullnameOverride: redis
+              master:
+                persistence:
+                  size: "8Gi" # patched from instance
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 500Mi
+                  requests:
+                    cpu: 100m
+                    memory: 128Mi
+          reclaimPolicy: Delete
+          rollbackLimit: 3
+      patches:
+        - fromFieldPath: metadata.labels
+        - fromFieldPath: metadata.annotations
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.forProvider.set[0].valueFrom.secretKeyRef.name
+          transforms:
+            - string:
+                fmt: "%s-password"
+              type: string
+        - fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-credentials"
+        # Parameter patches
+        - fromFieldPath: spec.parameters.resources.storageSize
+          toFieldPath: spec.forProvider.values.master.persistence.size
+        # - fromFieldPath: spec.parameters.resources
+        #   toFieldPath: spec.forProvider.values.master.resources
+        #   policy:
+        #     mergeOptions:
+        #       keepMapValues: true # this doesn't work for resources (they're not a map at this level)
+        - fromFieldPath: spec.parameters.resources.limits.memory
+          toFieldPath: spec.forProvider.values.master.resources.limits.memory
+        - fromFieldPath: spec.parameters.resources.requests.memory
+          toFieldPath: spec.forProvider.values.master.resources.requests.memory
+        - fromFieldPath: spec.parameters.resources.limits.cpu
+          toFieldPath: spec.forProvider.values.master.resources.limits.cpu
+        - fromFieldPath: spec.parameters.resources.requests.cpu
+          toFieldPath: spec.forProvider.values.master.resources.requests.cpu
+        # Update policy
+        - fromFieldPath: spec.parameters.updatePolicy.version
+          toFieldPath: spec.forProvider.chart.version
+          transforms:
+            - type: map
+              map:
+                stable: 12.9.1
+                edge: 12.9.2
+                stable-6: 12.9.1 # '6' refers to Redis major version
+                # Simulating an older Redis version.
+                # If removed from the map, instances that use this version become unready, unless they pin the composition revision and set `compositionUpdatePolicy=Manual`
+                stable-5: 12.9.0
+        # Namespace patches
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.forProvider.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
+        - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+          toFieldPath: spec.writeConnectionSecretToRef.namespace
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.connectionDetails[0].namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.connectionDetails[1].namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.connectionDetails[2].namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"

@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-app
+---
+apiVersion: syn.tools/v1
+kind: RedisInstance
+metadata:
+  name: redis1
+  namespace: my-app
+spec:
+  parameters:
+    resources:
+      storageSize: 10Gi
+      limits:
+        memory: 0.2Gi
+    updatePolicy:
+      version: stable-6

@@ -1,0 +1,5 @@
+= Restore Instance from Backup
+
+This guide provides instructions how to perform data restores from backups.
+
+TBD

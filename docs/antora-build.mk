@@ -16,8 +16,9 @@ docs-html: $(docs_out_dir)/index.html ## Generate HTML version of documentation 
 $(docs_out_dir)/index.html:
 	$(antora_cmd) $(antora_opts) docs/antora-playbook.yml
 
+# Publishes the Antora documentation on Github Pages
 .PHONY: docs-publish
-docs-publish: docs/node_modules docs-html ## Publishes the Antora documentation on Github Pages
+docs-publish: docs/node_modules docs-html
 	npm --prefix ./docs run deploy
 
 docs/node_modules:

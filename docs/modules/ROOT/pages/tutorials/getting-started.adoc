@@ -17,19 +17,10 @@ kubectl create namespace my-redis
 
 . Create the following new `RedisInstance` resource in a new `instance.yaml` file.
 +
+.instance.yaml
 [source,yaml]
 ----
-apiVersion: syn.tools/v1
-kind: RedisInstance
-metadata:
-  name: my-instance <1>
-  namespace: my-redis
-spec:
-  parameters:
-    resources:
-      storageSize: 1Gi
-    updatePolicy:
-      version: latest
+include::example$getting-started-instance.yaml[]
 ----
 <1> Name of the instance.
     Be sure to not make it too long.
@@ -61,40 +52,7 @@ kubectl -n my-redis get secret my-instance-credentials
 .app.yaml
 [source,yaml]
 ----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: service-connection-verify
-  namespace: my-redis
-spec:
-  backoffLimit: 0
-  template:
-    spec:
-      restartPolicy: Never
-      containers:
-        - name: redis-client
-          image: docker.io/bitnami/redis:6.0.12-debian-10-r3
-          command:
-            - sh
-            - -c
-          args:
-            - redis-cli -h "${REDIS_HOST}" -p ${REDIS_PORT} ping
-          env:
-            - name: REDIS_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: my-instance-credentials
-                  key: endpoint
-            - name: REDIS_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: my-instance-credentials
-                  key: port
-            - name: REDISCLI_AUTH
-              valueFrom:
-                secretKeyRef:
-                  name: my-instance-credentials
-                  key: password
+include::example$getting-started-job.yaml[]
 ----
 
 . Verify that the application can talk to Redis.

@@ -24,9 +24,6 @@ lint: ## All-in-one linting
 	@echo 'Check for uncommitted changes ...'
 	git diff --exit-code
 
-.PHONY: crossplane-setup
-crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and install Crossplane
-
 .PHONY: .service-definition
 .service-definition: crossplane-setup k8up-setup
 	kubectl apply -f crossplane/composite.yaml
@@ -48,6 +45,9 @@ deprovision: kind-setup ## Uninstall the service instance
 	kubectl delete -f service/prototype-instance.yaml && \
 	kubectl delete ns "sv-redis-$${ns}"
 
+.PHONY: crossplane-setup
+crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and install Crossplane
+
 $(crossplane_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(crossplane_sentinel): $(KIND_KUBECONFIG)
 	helm repo add crossplane https://charts.crossplane.io/stable
@@ -61,10 +61,14 @@ $(crossplane_sentinel): $(KIND_KUBECONFIG)
 	@touch $@
 
 .PHONY: minio-setup
-minio-setup: $(minio_sentinel) ## Install Minio as S3 provider
+minio-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
+minio-setup: crossplane-setup ## Install Minio Crossplane implementation
+	kubectl apply -f k8up/s3-composite.yaml
+	kubectl apply -f k8up/s3-composition.yaml
+	kubectl wait --for condition=Offered compositeresourcedefinition/xs3buckets.syn.tools
 
 .PHONY: k8up-setup
-k8up-setup: $(minio_sentinel) $(k8up_sentinel) ## Install K8up operator
+k8up-setup: minio-setup $(k8up_sentinel) ## Install K8up operator
 
 $(k8up_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(k8up_sentinel): $(KIND_KUBECONFIG)
@@ -72,13 +76,6 @@ $(k8up_sentinel): $(KIND_KUBECONFIG)
 	kubectl apply -f https://github.com/k8up-io/k8up/releases/latest/download/k8up-crd.yaml
 	helm upgrade --install k8up --create-namespace --namespace k8up-system appuio/k8up --wait
 	kubectl -n k8up-system wait --for condition=Available deployment/k8up --timeout 60s
-	@touch $@
-
-$(minio_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
-$(minio_sentinel): $(KIND_KUBECONFIG)
-	helm repo add minio https://charts.min.io/
-	helm upgrade --install minio --create-namespace --namespace minio-system minio/minio --wait --values k8up/minio-values.yaml
-	kubectl -n minio-system wait --for condition=Available deployment/minio --timeout 60s
 	@touch $@
 
 .PHONY: clean

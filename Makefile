@@ -28,7 +28,7 @@ lint: ## All-in-one linting
 crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and install Crossplane
 
 .PHONY: .service-definition
-.service-definition: crossplane-setup
+.service-definition: crossplane-setup k8up-setup
 	kubectl apply -f crossplane/composite.yaml
 	kubectl apply -f crossplane/composition.yaml
 	kubectl wait --for condition=Offered compositeresourcedefinition/xredisinstances.syn.tools
@@ -58,6 +58,27 @@ $(crossplane_sentinel): $(KIND_KUBECONFIG)
 	kubectl wait --for condition=Healthy provider.pkg.crossplane.io/provider-helm --timeout 60s
 	kubectl apply -f crossplane/provider-config.yaml
 	kubectl create clusterrolebinding crossplane:provider-helm-admin --clusterrole cluster-admin --serviceaccount crossplane-system:$$(kubectl get sa -n crossplane-system -o custom-columns=NAME:.metadata.name --no-headers | grep provider-helm)
+	@touch $@
+
+.PHONY: minio-setup
+minio-setup: $(minio_sentinel) ## Install Minio as S3 provider
+
+.PHONY: k8up-setup
+k8up-setup: $(minio_sentinel) $(k8up_sentinel) ## Install K8up operator
+
+$(k8up_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
+$(k8up_sentinel): $(KIND_KUBECONFIG)
+	helm repo add appuio https://charts.appuio.ch
+	kubectl apply -f https://github.com/k8up-io/k8up/releases/latest/download/k8up-crd.yaml
+	helm upgrade --install k8up --create-namespace --namespace k8up-system appuio/k8up --wait
+	kubectl -n k8up-system wait --for condition=Available deployment/k8up --timeout 60s
+	@touch $@
+
+$(minio_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
+$(minio_sentinel): $(KIND_KUBECONFIG)
+	helm repo add minio https://charts.min.io/
+	helm upgrade --install minio --create-namespace --namespace minio-system minio/minio --wait --values k8up/minio-values.yaml
+	kubectl -n minio-system wait --for condition=Available deployment/minio --timeout 60s
 	@touch $@
 
 .PHONY: clean

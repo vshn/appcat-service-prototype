@@ -1,0 +1,7 @@
+replicas: 1
+resources:
+  requests:
+    memory: 128Mi
+persistence:
+  size: 1Gi
+mode: standalone

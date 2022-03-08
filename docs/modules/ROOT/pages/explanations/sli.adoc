@@ -11,11 +11,19 @@ Uptime conditions::
 Downtime conditions::
 - Redis is not responding to "ping" requests within a 1-minute interval.
 
-[NOTE]
-====
-- Instances in downtime caused by customer error or abuse do not count towards downtime in SLAs.
-- Some health conditions may cause a complete downtime, but may not be treated as "down".
-====
+Maintenance conditions::
+- Instance is being automatically updated to a minor or patch version.
+- Instance is being manually upgraded to a major version.
+- Instance is being reconfigured by the customer (for example storage expansion).
+- The platform itself is in maintenance mode and causes maintenance-related downtimes (for example Node drains).
+
+[.discrete]
+=== Exclusions
+
+These conditions do not count towards downtime in SLAs.
+
+- Instances in downtime caused by customer error or abuse
+- Maintenance conditions may cause a complete downtime
 
 == SLI: Health
 
@@ -23,15 +31,10 @@ Degraded conditions::
 - Redis responds between 1% and 95% of "ping" requests within a 1-minute interval.
 - The configured storage volume is full.
 - Redis continues to serve read operations, but denies write operations.
-- Instance is being automatically updated to a minor or patch version.
-- Instance is being manually upgraded to a major version.
-- Instance is being reconfigured by the customer (for example storage expansion).
-- The platform itself is in maintenance mode and causes maintenance-related downtimes (for example Node drains).
 
 [NOTE]
 ====
-- Some degraded conditions also lead to complete downtime (for example maintenance).
-- Degraded instances do not count towards downtime in SLAs.
+Degraded instances do not count towards downtime in SLAs.
 ====
 
 == SLI: Backup

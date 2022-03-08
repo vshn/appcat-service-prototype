@@ -41,9 +41,7 @@ provision: .service-definition ## Install local Kubernetes cluster and provision
 .PHONY: deprovision
 deprovision: export KUBECONFIG = $(KIND_KUBECONFIG)
 deprovision: kind-setup ## Uninstall the service instance
-	ns=$$(kubectl -n my-app get RedisInstance.syn.tools redis1 -o jsonpath={.spec.resourceRef.name}) && \
-	kubectl delete -f service/prototype-instance.yaml && \
-	kubectl delete ns "sv-redis-$${ns}"
+	kubectl delete -f service/prototype-instance.yaml
 
 .PHONY: crossplane-setup
 crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and install Crossplane
@@ -58,6 +56,7 @@ $(crossplane_sentinel): $(KIND_KUBECONFIG)
 	kubectl wait --for condition=Healthy provider.pkg.crossplane.io/provider-helm --timeout 60s
 	kubectl apply -f crossplane/provider-config.yaml
 	kubectl create clusterrolebinding crossplane:provider-helm-admin --clusterrole cluster-admin --serviceaccount crossplane-system:$$(kubectl get sa -n crossplane-system -o custom-columns=NAME:.metadata.name --no-headers | grep provider-helm)
+	kubectl create clusterrolebinding crossplane:cluster-admin --clusterrole cluster-admin --serviceaccount crossplane-system:crossplane
 	@touch $@
 
 .PHONY: minio-setup

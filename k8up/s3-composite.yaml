@@ -35,3 +35,5 @@ spec:
               properties:
                 bucketName:
                   type: string
+                endpoint:
+                  type: string

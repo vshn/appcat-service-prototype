@@ -18,6 +18,18 @@ spec:
   resources:
     - base:
         apiVersion: v1
+        kind: Namespace # Let the composition manage the namespace, Crossplane will clean it up if deprovisioned
+        metadata:
+          name: "" # patched from composite name
+      patches:
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-minio-%s"
+    - base:
+        apiVersion: v1
         kind: Secret
         metadata:
           annotations:
@@ -101,18 +113,38 @@ spec:
         - fromFieldPath: metadata.labels
         - fromFieldPath: metadata.annotations
         # Patch connection secret name
-        - fromFieldPath: metadata.name
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.forProvider.set[0].valueFrom.secretKeyRef.name
-        - fromFieldPath: metadata.name
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.forProvider.set[1].valueFrom.secretKeyRef.name
         - fromFieldPath: metadata.labels[crossplane.io/claim-name]
           toFieldPath: spec.writeConnectionSecretToRef.name
         # bucket name
-        - fromFieldPath: metadata.labels[crossplane.io/claim-name]
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+              - fromFieldPath: metadata.labels[crossplane.io/claim-name]
+            strategy: string
+            string:
+              fmt: "%s-%s"
           toFieldPath: spec.forProvider.values.buckets[0].name
-        - type: ToCompositeFieldPath
-          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+        - type: CombineToComposite
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+              - fromFieldPath: metadata.labels[crossplane.io/claim-name]
+            strategy: string
+            string:
+              fmt: "%s-%s"
           toFieldPath: status.bucketName
+        - type: ToCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: status.endpoint
+          transforms:
+            - type: string
+              string:
+                fmt: "http://minio-server.sv-minio-%s.svc.cluster.local:9000"
         # Namespace patches
         - fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
           toFieldPath: spec.writeConnectionSecretToRef.namespace

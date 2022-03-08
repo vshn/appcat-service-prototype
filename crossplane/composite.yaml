@@ -21,7 +21,6 @@ spec:
   connectionSecretKeys:
     - endpoint
     - port
-    - sentinelPort
     - password
   group: syn.tools
   names:

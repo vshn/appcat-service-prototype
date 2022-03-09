@@ -62,8 +62,8 @@ $(crossplane_sentinel): $(KIND_KUBECONFIG)
 .PHONY: minio-setup
 minio-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
 minio-setup: crossplane-setup ## Install Minio Crossplane implementation
-	kubectl apply -f k8up/s3-composite.yaml
-	kubectl apply -f k8up/s3-composition.yaml
+	kubectl apply -f minio/s3-composite.yaml
+	kubectl apply -f minio/s3-composition.yaml
 	kubectl wait --for condition=Offered compositeresourcedefinition/xs3buckets.syn.tools
 
 .PHONY: k8up-setup

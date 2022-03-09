@@ -43,6 +43,10 @@ spec:
             - type: string
               string:
                 fmt: "sv-redis-%s"
+      readinessChecks:
+        - type: MatchString
+          fieldPath: status.phase
+          matchString: Active
     - base:
         apiVersion: v1
         kind: Secret
@@ -283,3 +287,5 @@ spec:
             strategy: string
             string:
               fmt: sv-redis-%s-%s
+      readinessChecks:
+        - type: None

@@ -28,6 +28,10 @@ spec:
             - type: string
               string:
                 fmt: "sv-minio-%s"
+      readinessChecks:
+        - type: MatchString
+          fieldPath: status.phase
+          matchString: Active
     - base:
         apiVersion: v1
         kind: Secret

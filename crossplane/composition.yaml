@@ -121,8 +121,8 @@ spec:
               fullnameOverride: redis
               master:
                 podAnnotations:
-                  k8up.io/backupcommand: cat /data/appendonly.aof
-                  k8up.io/file-extension: .aof
+                  k8up.io/backupcommand: tar -czf - /data/
+                  k8up.io/file-extension: .tar.gz
                 persistence:
                   size: "8Gi" # patched from instance
                 resources:

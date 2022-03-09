@@ -116,10 +116,11 @@ spec:
                 slaveCount: 0
               fullnameOverride: redis
               master:
+                podAnnotations:
+                  k8up.io/backupcommand: cat /data/appendonly.aof
+                  k8up.io/file-extension: .aof
                 persistence:
                   size: "8Gi" # patched from instance
-                  accessModes:
-                    - ReadWriteMany # K8up can't handle RWO yet
                 resources:
                   limits:
                     cpu: 500m

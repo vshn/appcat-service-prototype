@@ -31,37 +31,40 @@ spec:
 
 `*`: Required value
 
-// validation like minimum size currently not implemented (needs policy engine)
 == `resources`
 
+// validation like minimum size currently not implemented (needs policy engine)
 [%header,cols=3*]
 |===
 |Parameter name
-|Minimum
-|Maximum
+|Standalone
+|Replicated
 
 |`storageSize`
-|`1Gi`
-|`100Gi`
+|`1Gi` to `100Gi`
+|`5Gi` to `500Gi` (each member)
 
+// keep these values in sync with contraints.adoc!
 |`requests.memory`
-|`128Mi`
-|`4Gi`
+|`128Mi` to `4Gi`
+|`256Mi` to `6Gi` (each member)
 
 |`limits.memory`
-|`256Mi`
-|`6Gi`
+|`256Mi` to `6Gi`
+|`512Mi` to `12Gi` (each member)
 
 |`requests.cpu`
-|`30m`
-|`2000m`
+|`30m` to `2000m`
+|`100m` to `4000m` (each member)
 
 |`limits.cpu`
-|`100m`
-|`4000m`
+|`100m` to `4000m`
+|`200m` to `8000m` (each member)
 |===
 
 == `updatePolicy.version`
+
+See xref:references/constraints.adoc[Constraints] how version and update policies work.
 
 Supported values::
 . `latest`: Latest Redis version

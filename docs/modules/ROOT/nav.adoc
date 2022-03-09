@@ -9,6 +9,7 @@
 
 .Technical reference
 * xref:references/api-spec.adoc[API Specification]
+* xref:references/constraints.adoc[Constraints]
 
 .Explanation
 * xref:explanations/features.adoc[Features]

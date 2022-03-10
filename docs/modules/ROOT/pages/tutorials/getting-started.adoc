@@ -2,6 +2,9 @@
 
 This page describes how to order a new managed Redis instance and consume it in an application.
 
+Target Audience::
+Service Consumer (Developer)
+
 == Prerequisites
 
 * `kubectl`

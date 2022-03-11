@@ -44,4 +44,11 @@ Degraded instances do not count towards downtime in SLAs.
 
 == SLI: Backup
 
-TBD
+Failure conditions::
+- Backup process didn't start after its scheduled time.
+- Backup process reported a failure.
+
+[NOTE]
+====
+Failed instance backups do not count towards downtime in SLAs.
+====

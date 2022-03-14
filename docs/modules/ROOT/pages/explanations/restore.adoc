@@ -1,0 +1,5 @@
+= Instance Restores
+
+This page describes the process how data is being restored from an instance backup.
+
+TBD

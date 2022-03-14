@@ -45,7 +45,7 @@ Degraded instances do not count towards downtime in SLAs.
 == SLI: Backup
 
 Failure conditions::
-- Backup process didn't start after its scheduled time.
+- Backup process didn't start at the scheduled time.
 - Backup process reported a failure.
 
 [NOTE]

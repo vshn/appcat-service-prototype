@@ -38,7 +38,8 @@ Deleting the service instance resource also irrevocably deletes all backups!
 
 == Schedule
 
-The backups are triggered every 24h at a random time.
+The backups are triggered every 24h.
+The time is randomized but the same for every day.
 
 == Process
 

@@ -23,6 +23,8 @@ This will
 1. Install a Composition for the prototype service
 1. Deploy a service instance of the prototype
 1. Verify that the service is up and usable
+1. Provision an S3 bucket using Minio
+1. Setup backups using K8up (to be verified manually, see docs)
 
 The prototype service is a simple Redis instance.
 

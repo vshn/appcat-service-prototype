@@ -26,15 +26,15 @@ In general, the restore is done using the following steps:
 +
 [source,bash]
 ----
-instance_namespace="your-namespace"
-instance_name="the name of RedisInstance resource in $instance_namespace"
+app_namespace="your-app-namespace"
+instance_name="the name of RedisInstance resource in $app_namespace"
 ----
 
 . Gather information
 +
 [source,bash]
 ----
-redis_composition=$(kubectl -n $instance_namespace get RedisInstance $instance_name -o jsonpath="{.spec.resourceRef.name}")
+redis_composition=$(kubectl -n $app_namespace get RedisInstance $instance_name -o jsonpath="{.spec.resourceRef.name}")
 redis_namespace="sv-redis-$redis_composition"
 minio_composition=$(kubectl get xredisinstance $redis_composition -o jsonpath="{.spec.resourceRefs[3].name}")
 minio_namespace="sv-minio-$redis_composition"

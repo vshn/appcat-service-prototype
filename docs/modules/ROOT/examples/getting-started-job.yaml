@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: service-connection-verify
-  namespace: my-redis
+  namespace: my-project
 spec:
   backoffLimit: 0
   template:

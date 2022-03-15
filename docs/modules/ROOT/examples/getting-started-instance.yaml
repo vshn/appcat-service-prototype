@@ -1,8 +1,8 @@
 apiVersion: syn.tools/v1
 kind: RedisInstance
 metadata:
-  name: my-instance <1>
-  namespace: my-redis
+  name: my-instance # <1>
+  namespace: my-project
 spec:
   parameters:
     resources:

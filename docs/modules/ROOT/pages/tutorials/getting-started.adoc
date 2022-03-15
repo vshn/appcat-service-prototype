@@ -11,11 +11,11 @@ Service Consumer (Developer)
 
 == Steps
 
-. Create a new namespace `my-redis`.
+. Create a new namespace `my-project`.
 +
 [source,bash]
 ----
-kubectl create namespace my-redis
+kubectl create namespace my-project
 ----
 
 . Create the following new `RedisInstance` resource in a new `instance.yaml` file.
@@ -39,14 +39,14 @@ kubectl apply -f instance.yaml
 +
 [source,bash]
 ----
-kubectl -n my-redis wait --for condition=Ready RedisInstance.syn.tools/my-instance --timeout 180s
+kubectl -n my-project wait --for condition=Ready RedisInstance.syn.tools/my-instance --timeout 180s
 ----
 
-. Verify that there's a new `Secret` generated in the `my-redis` namespace.
+. Verify that there's a new `Secret` generated in the `my-project` namespace.
 +
 [source,bash]
 ----
-kubectl -n my-redis get secret my-instance-credentials
+kubectl -n my-project get secret my-instance-credentials
 ----
 
 . Configure the application to use the credentials provided.
@@ -62,7 +62,7 @@ include::example$getting-started-job.yaml[]
 +
 [source,bash]
 ----
-kubectl wait -n my-redis --for condition=Complete job/service-connection-verify
+kubectl wait -n my-project --for condition=Complete job/service-connection-verify
 ----
 
 == Further Reading

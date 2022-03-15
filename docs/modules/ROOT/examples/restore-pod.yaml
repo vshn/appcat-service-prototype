@@ -9,12 +9,12 @@ spec:
         claimName: redis-data-redis-master-0
   containers:
     - name: restore
-      image: busybox:latest
+      image: docker.io/library/busybox:latest
       command:
         - /bin/sh
       args:
         - -c
-        - sleep 86400s
+        - sleep infinity
       volumeMounts:
         - name: redis-data
           mountPath: /data

@@ -4,3 +4,5 @@
 .cache/
 .public/
 node_modules/
+
+*.log

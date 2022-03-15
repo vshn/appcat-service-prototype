@@ -71,56 +71,18 @@ minio_pfid=$!
 [source,bash]
 ----
 restic snapshots
-----
-
-. Select the long snapshot ID
-+
-[source,bash]
-----
-restic snapshots --json | jq -r '.[].id'
 snapshot_id="" <1>
 ----
-<1> Selected long snapshot ID
+<1> Select the snapshot ID from the output of `restic snapshots`
 +
 [TIP]
 ====
-If you just need the latest snapshot, use this command:
+If you just need the latest snapshot, set variable to `latest`:
 [source,bash]
 ----
-snapshot_id=$(restic snapshots --latest 1 --json | jq -r '.[].id')
+snapshot_id=latest
 ----
 ====
-
-. Create the `Restore` object
-+
-[source,bash]
-----
-kubectl -n $redis_namespace apply -f - <<EOF
-include::example$restore-k8up.yaml[]
-EOF
-----
-
-. Mount the restic repository locally
-+
-[source,bash]
-----
-mkdir -p restic_mount restic_restore
-restic mount restic_mount/ > restic_mount.log 2>&1 &
-restic_pid=$!
-----
-
-. Select the snapshot and extract the data
-+
-[NOTE]
-====
-The latest snapshot is used in the snippet below, but you can choose a specific date by directory name by running `ls restic_mount/snapshots`.
-====
-+
-[source,bash]
-----
-snapshot=latest
-tar -zf "restic_mount/snapshots/$snapshot/sv-redis-$redis_composition-redis.tar.gz" -C restic_restore/
-----
 
 . Copy data to service instance
 +
@@ -142,7 +104,7 @@ kubectl -n $redis_namespace create -f - <<EOF
 include::example$restore-pod.yaml[]
 EOF
 kubectl -n $redis_namespace wait --for condition=Ready pod/redis-restore
-kubectl cp restic_restore/data $redis_namespace/redis-restore:/
+restic dump $snapshot_id /sv-redis-$redis_composition-redis.tar.gz | kubectl -n $redis_namespace exec -i redis-restore -- /bin/sh -c 'rm -r /data/* && tar -xzf - -C /'
 kubectl -n $redis_namespace delete pod redis-restore
 kubectl -n $redis_namespace scale statefulset redis-master --replicas=1
 ----
@@ -151,7 +113,7 @@ kubectl -n $redis_namespace scale statefulset redis-master --replicas=1
 
 [source,bash]
 ----
-kill $minio_pfid $restic_pid
-rm -rf minio_portforward.log restic_mount.log restic_mount restic_restore
+kill $minio_pfid
+rm -rf minio_portforward.log
 unset RESTIC_REPOSITORY RESTIC_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
 ----

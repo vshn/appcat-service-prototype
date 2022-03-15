@@ -18,6 +18,7 @@ In general, the restore is done using the following steps:
 - `kubectl`
 - `base64`
 - `restic`
+- `jq`
 
 == Preparation
 
@@ -63,6 +64,40 @@ export AWS_SECRET_ACCESS_KEY=$s3_secretkey
 ----
 kubectl -n $minio_namespace port-forward pod/$minio_pod 9000:9000 > minio_portforward.log 2>&1 &
 minio_pfid=$!
+----
+
+. Display the available snapshots
++
+[source,bash]
+----
+restic snapshots
+----
+
+. Select the long snapshot ID
++
+[source,bash]
+----
+restic snapshots --json | jq -r '.[].id'
+snapshot_id="" <1>
+----
+<1> Selected long snapshot ID
++
+[TIP]
+====
+If you just need the latest snapshot, use this command:
+[source,bash]
+----
+snapshot_id=$(restic snapshots --latest 1 --json | jq -r '.[].id')
+----
+====
+
+. Create the `Restore` object
++
+[source,bash]
+----
+kubectl -n $redis_namespace apply -f - <<EOF
+include::example$restore-k8up.yaml[]
+EOF
 ----
 
 . Mount the restic repository locally

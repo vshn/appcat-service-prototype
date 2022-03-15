@@ -1,0 +1,22 @@
+apiVersion: k8up.io/v1
+kind: Restore
+metadata:
+  name: restore-redis
+spec:
+  snapshot: $snapshot_id
+  restoreMethod:
+    folder:
+      claimName: redis-data-redis-master-0
+  backend:
+    repoPasswordSecretRef:
+      key: repoEncryptionSecret
+      name: $redis_composition-password
+    s3:
+      accessKeyIDSecretRef:
+        key: accessKey
+        name: $minio_composition
+      bucket: $s3_bucketname
+      endpoint: http://minio-server.sv-minio-$redis_composition.svc.cluster.local:9000
+      secretAccessKeySecretRef:
+        key: secretKey
+        name: $minio_composition

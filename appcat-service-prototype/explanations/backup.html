@@ -180,11 +180,100 @@
 </aside>
 <article class="doc">
 <h1 class="page">Instance Backups</h1>
+<div id="preamble">
+<div class="sectionbody">
 <div class="paragraph">
 <p>This page explains the process and content of instance backups.</p>
 </div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
 <div class="paragraph">
-<p>TBD</p>
+<p>In general the <code>link here</code>[Data Protection] document applies and governs all aspects if not further defined below.
+Please read and understand this before reading on.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_contents"><a class="anchor" href="#_contents"></a>Contents</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The backups contain the following files and directories:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>appendonly.aof</code></p>
+</li>
+<li>
+<p><code>dump.rdb</code> (if existing)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This is enough to restore Redis to a working state.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_location"><a class="anchor" href="#_location"></a>Location</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The backups are encrypted at rest in an S3 bucket.
+The bucket is residing on the same datacenter (region and provider) as the service instance is running on.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_retention_policy"><a class="anchor" href="#_retention_policy"></a>Retention policy</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The default retention policy applies.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Deleting the service instance resource also irrevocably deletes all backups!</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_schedule"><a class="anchor" href="#_schedule"></a>Schedule</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The backups are triggered every 24h.
+The time is randomized but the same for every day.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_process"><a class="anchor" href="#_process"></a>Process</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The backup is done while the service instance is running.
+There isn&#8217;t a service interruption and no noticable performance impact is expected.</p>
+</div>
+<div class="paragraph">
+<p>The backup process itself is implemented using <a href="https://k8up.io">K8up</a> and the backend using <a href="https://restic.net">Restic</a>.</p>
+</div>
+</div>
 </div>
 </article>
   </div>

@@ -180,11 +180,40 @@
 </aside>
 <article class="doc">
 <h1 class="page">Instance Restores</h1>
+<div id="preamble">
+<div class="sectionbody">
 <div class="paragraph">
 <p>This page describes the process how data is being restored from an instance backup.</p>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_list_available_restores"><a class="anchor" href="#_list_available_restores"></a>List Available Restores</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<p>TBD</p>
+<p>Currently, it&#8217;s not possible to view which backups are available and their backup times.
+Please request the list via support channels included in your SLA.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_trigger_a_restore"><a class="anchor" href="#_trigger_a_restore"></a>Trigger a Restore</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Currently, it&#8217;s not possible to select and apply a data restore to an instance.
+Please request a service instance restoration via support channels included in your SLA.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_process"><a class="anchor" href="#_process"></a>Process</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once a restore is triggered, during the duration of the restore process the service will have reduced availability or may be completely unavailable.
+Redis clients will need to reconnect after the restore.
+Depending on the client implementation this may require restarting the application.</p>
+</div>
+</div>
 </div>
 </article>
   </div>

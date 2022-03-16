@@ -24,11 +24,8 @@ lint: ## All-in-one linting
 	@echo 'Check for uncommitted changes ...'
 	git diff --exit-code
 
-.PHONY: crossplane-setup
-crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and install Crossplane
-
 .PHONY: .service-definition
-.service-definition: crossplane-setup
+.service-definition: crossplane-setup k8up-setup
 	kubectl apply -f crossplane/composite.yaml
 	kubectl apply -f crossplane/composition.yaml
 	kubectl wait --for condition=Offered compositeresourcedefinition/xredisinstances.syn.tools
@@ -44,9 +41,10 @@ provision: .service-definition ## Install local Kubernetes cluster and provision
 .PHONY: deprovision
 deprovision: export KUBECONFIG = $(KIND_KUBECONFIG)
 deprovision: kind-setup ## Uninstall the service instance
-	ns=$$(kubectl -n my-app get RedisInstance.syn.tools redis1 -o jsonpath={.spec.resourceRef.name}) && \
-	kubectl delete -f service/prototype-instance.yaml && \
-	kubectl delete ns "sv-redis-$${ns}"
+	kubectl delete -f service/prototype-instance.yaml
+
+.PHONY: crossplane-setup
+crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and install Crossplane
 
 $(crossplane_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(crossplane_sentinel): $(KIND_KUBECONFIG)
@@ -58,6 +56,25 @@ $(crossplane_sentinel): $(KIND_KUBECONFIG)
 	kubectl wait --for condition=Healthy provider.pkg.crossplane.io/provider-helm --timeout 60s
 	kubectl apply -f crossplane/provider-config.yaml
 	kubectl create clusterrolebinding crossplane:provider-helm-admin --clusterrole cluster-admin --serviceaccount crossplane-system:$$(kubectl get sa -n crossplane-system -o custom-columns=NAME:.metadata.name --no-headers | grep provider-helm)
+	kubectl create clusterrolebinding crossplane:cluster-admin --clusterrole cluster-admin --serviceaccount crossplane-system:crossplane
+	@touch $@
+
+.PHONY: minio-setup
+minio-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
+minio-setup: crossplane-setup ## Install Minio Crossplane implementation
+	kubectl apply -f minio/s3-composite.yaml
+	kubectl apply -f minio/s3-composition.yaml
+	kubectl wait --for condition=Offered compositeresourcedefinition/xs3buckets.syn.tools
+
+.PHONY: k8up-setup
+k8up-setup: minio-setup $(k8up_sentinel) ## Install K8up operator
+
+$(k8up_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
+$(k8up_sentinel): $(KIND_KUBECONFIG)
+	helm repo add appuio https://charts.appuio.ch
+	kubectl apply -f https://github.com/k8up-io/k8up/releases/latest/download/k8up-crd.yaml
+	helm upgrade --install k8up --create-namespace --namespace k8up-system appuio/k8up --wait
+	kubectl -n k8up-system wait --for condition=Available deployment/k8up --timeout 60s
 	@touch $@
 
 .PHONY: clean

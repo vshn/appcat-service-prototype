@@ -33,13 +33,33 @@ spec:
   resources:
     - base:
         apiVersion: v1
+        kind: Namespace  # Let the composition manage the namespace, Crossplane will clean it up if deprovisioned
+        metadata:
+          name: "" # patched from composite
+      patches:
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
+      readinessChecks:
+        - type: MatchString
+          fieldPath: status.phase
+          matchString: Active
+    - base:
+        apiVersion: v1
         kind: Secret
         metadata:
           annotations:
-            secret-generator.v1.mittwald.de/autogenerate: password
+            secret-generator.v1.mittwald.de/autogenerate: password,repoEncryptionSecret
       patches:
-        - fromFieldPath: spec.writeConnectionSecretToRef.namespace
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: metadata.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: metadata.name
           transforms:
@@ -47,7 +67,10 @@ spec:
                 fmt: "%s-password"
               type: string
       readinessChecks:
-        - type: None
+        - type: NonEmpty
+          fieldPath: data.password
+        - type: NonEmpty
+          fieldPath: data.repoEncryptionSecret
     - connectionDetails:
         - fromConnectionSecretKey: endpoint
         - fromConnectionSecretKey: port
@@ -80,6 +103,7 @@ spec:
           forProvider:
             wait: true
             chart:
+              # https://artifacthub.io/packages/helm/bitnami/redis/12.9.0
               name: redis
               repository: https://charts.bitnami.com/bitnami
               version: 12.9.0
@@ -89,13 +113,16 @@ spec:
                   secretKeyRef:
                     key: password
                     name: "" # patched from instance name
-                    namespace: crossplane-redis
+                    namespace: # patched from composite name
             values:
               cluster:
                 enabled: false
                 slaveCount: 0
               fullnameOverride: redis
               master:
+                podAnnotations:
+                  k8up.io/backupcommand: tar -czf - /data/
+                  k8up.io/file-extension: .tar.gz
                 persistence:
                   size: "8Gi" # patched from instance
                 resources:
@@ -116,6 +143,12 @@ spec:
             - string:
                 fmt: "%s-password"
               type: string
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.forProvider.set[0].valueFrom.secretKeyRef.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
         - fromFieldPath: metadata.labels[crossplane.io/claim-name]
           toFieldPath: spec.writeConnectionSecretToRef.name
           transforms:
@@ -177,3 +210,82 @@ spec:
             - type: string
               string:
                 fmt: "sv-redis-%s"
+    - base:
+        apiVersion: syn.tools/v1
+        kind: S3Bucket
+        metadata:
+          name: backup-bucket
+          namespace: "" # patch from instance name
+        spec: {}
+      patches:
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: metadata.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
+    - base:
+        apiVersion: k8up.io/v1
+        kind: Schedule
+        metadata:
+          name: backup
+          namespace: "" # patch from redis namespace
+        spec:
+          backend:
+            s3:
+              endpoint: "" # patched from minio namespace
+              bucket: backups
+              accessKeyIDSecretRef:
+                name: "" # patched from S3Bucket XR name
+                key: accessKey
+              secretAccessKeySecretRef:
+                name: "" # patched from S3Bucket XR name
+                key: secretKey
+            repoPasswordSecretRef:
+              name: "" # patched from generated Secret name
+              key: repoEncryptionSecret
+          backup:
+            schedule: '*/5 * * * *' # this should be randomized in prod
+            failedJobsHistoryLimit: 1
+            successfulJobsHistoryLimit: 1
+          prune:
+            schedule: '@hourly-random'
+            retention:
+              keepLast: 5
+              keepDaily: 7
+              keepWeekly: 2
+              keepMonthly: 3
+      patches:
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: metadata.namespace
+          transforms:
+            - type: string
+              string:
+                fmt: "sv-redis-%s"
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.backend.repoPasswordSecretRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-password"
+        - fromFieldPath: spec.resourceRefs[3].name
+          toFieldPath: spec.backend.s3.accessKeyIDSecretRef.name
+        - fromFieldPath: spec.resourceRefs[3].name
+          toFieldPath: spec.backend.s3.secretAccessKeySecretRef.name
+        - fromFieldPath: metadata.labels[crossplane.io/composite]
+          toFieldPath: spec.backend.s3.endpoint
+          transforms:
+            - type: string
+              string:
+                fmt: http://minio-server.sv-minio-%s.svc.cluster.local:9000
+        - type: CombineFromComposite
+          toFieldPath: spec.backend.s3.bucket
+          combine:
+            variables:
+              - fromFieldPath: metadata.labels[crossplane.io/composite]
+              - fromFieldPath: spec.resourceRefs[3].name
+            strategy: string
+            string:
+              fmt: sv-redis-%s-%s
+      readinessChecks:
+        - type: None

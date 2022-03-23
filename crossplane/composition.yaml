@@ -137,8 +137,25 @@ spec:
                 serviceMonitor:
                   enabled: true
                 prometheusRule:
-                  enabled: false
-                  rules: [] # tbd
+                  enabled: true
+                  rules:
+                    - alert: RedisDown
+                      expr: redis_up{service="{{ template "redis.fullname" . }}-metrics"} == 0
+                      for: 2m
+                      labels:
+                        severity: error
+                      annotations:
+                        summary: Redis(TM) instance {{ "{{ $labels.instance }}" }} down
+                        description: Redis(TM) instance {{ "{{ $labels.instance }}" }} is down
+                    - alert: RedisMissingMaster
+                      expr: (count(redis_instance_info{role="master"}) or vector(0)) < 1
+                      for: 2m
+                      labels:
+                        severity: error
+                      annotations:
+                        summary: Redis missing master (instance {{ "{{ $labels.instance }}" }})
+                        description: >
+                          Redis cluster has no node marked as master.\n  VALUE = {{ "{{ $value }}" }}\n  LABELS = {{ "{{ $labels }}" }}
           reclaimPolicy: Delete
           rollbackLimit: 3
       patches:

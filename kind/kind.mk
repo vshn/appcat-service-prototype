@@ -1,19 +1,21 @@
 kind_dir ?= .kind
+ingress_sentinel = $(kind_dir)/ingress-sentinel
 
-.PHONY: kind
 kind: export KUBECONFIG = $(KIND_KUBECONFIG)
 kind: kind-setup-ingress ## All-in-one kind target
 
-.PHONY: kind-setup
 kind-setup: export KUBECONFIG = $(KIND_KUBECONFIG)
 kind-setup: $(KIND_KUBECONFIG) ## Creates the kind cluster
 
-.PHONY: kind-setup-ingress
 kind-setup-ingress: export KUBECONFIG = $(KIND_KUBECONFIG)
-kind-setup-ingress: kind-setup ### Install NGINX as ingress controller onto kind cluster (localhost:8081 / localhost:8443)
+kind-setup-ingress: $(ingress_sentinel) ### Install NGINX as ingress controller onto kind cluster (localhost:8081 / localhost:8443)
+
+$(ingress_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
+$(ingress_sentinel): $(KIND_KUBECONFIG)
 	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 	kubectl wait -n ingress-nginx --for condition=Complete jobs/ingress-nginx-admission-patch --timeout 180s
 	kubectl wait -n ingress-nginx --for condition=ContainersReady --timeout 180s $$(kubectl -n ingress-nginx get pods -o name --no-headers | grep controller)
+	@touch $@
 
 # .PHONY: kind-load-image
 # kind-load-image: kind-setup build-docker ### Load the container image onto kind cluster

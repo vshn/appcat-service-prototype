@@ -147,6 +147,7 @@ spec:
                       annotations:
                         summary: Redis(TM) instance {{ "{{ $labels.instance }}" }} down
                         description: Redis(TM) instance {{ "{{ $labels.instance }}" }} is down
+                        runbook_url: https://vshn.github.io/appcat-service-prototype/appcat-service-prototype/runbooks/RedisDown.html
                     - alert: RedisMissingMaster
                       expr: (count(redis_instance_info{role="master"}) or vector(0)) < 1
                       for: 2m
@@ -156,6 +157,7 @@ spec:
                         summary: Redis missing master (instance {{ "{{ $labels.instance }}" }})
                         description: >
                           Redis cluster has no node marked as master.\n  VALUE = {{ "{{ $value }}" }}\n  LABELS = {{ "{{ $labels }}" }}
+                        runbook_url: https://vshn.github.io/appcat-service-prototype/appcat-service-prototype/runbooks/RedisMissingMaster.html
           reclaimPolicy: Delete
           rollbackLimit: 3
       patches:

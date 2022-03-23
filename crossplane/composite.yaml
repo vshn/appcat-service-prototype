@@ -97,3 +97,9 @@ spec:
                           type: string
                         window: # ??
                           type: string
+                    alerts:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                          default: false

@@ -132,6 +132,13 @@ spec:
                   requests:
                     cpu: 100m
                     memory: 128Mi
+              metrics:
+                enabled: true
+                serviceMonitor:
+                  enabled: true
+                prometheusRule:
+                  enabled: false
+                  rules: [] # tbd
           reclaimPolicy: Delete
           rollbackLimit: 3
       patches:

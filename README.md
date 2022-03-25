@@ -97,6 +97,8 @@ Deployments are left untouched, so that should give a last resort to either upgr
 
 Using this approach doesn't strictly need the new `CompositionRevision` feature, but it may be useful in other cases.
 
+This approach could also be more efficiently handled by a custom Crossplane provider.
+
 ### Deploying additional resources
 
 Common Helm charts for apps like Redis, MariaDB etc. don't come with all the resources that are required for operating AppCat service catalog with our standards.
@@ -107,3 +109,5 @@ Whether this chart can be generic for all services or a dedicated one for each s
 
 Also possible are so-called "umbrella" charts, which list other charts as dependency and can deploy additional resources.
 For compositions that deploy the service with Helm this might be interesting, however compositions that can directly deploy cloud-provider-specific service instances using Crossplane providers this may be without dependencies.
+
+The most flexible solution would be to write a custom Crossplane provider.

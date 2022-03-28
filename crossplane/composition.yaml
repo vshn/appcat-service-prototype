@@ -132,6 +132,32 @@ spec:
                   requests:
                     cpu: 100m
                     memory: 128Mi
+              metrics:
+                enabled: true
+                serviceMonitor:
+                  enabled: false # patched from instance
+                prometheusRule:
+                  enabled: false # patched from instance
+                  rules:
+                    - alert: RedisDown
+                      expr: redis_up{service="{{ template "redis.fullname" . }}-metrics"} == 0
+                      for: 2m
+                      labels:
+                        severity: error
+                      annotations:
+                        summary: Redis(TM) instance {{ "{{ $labels.instance }}" }} down
+                        description: Redis(TM) instance {{ "{{ $labels.instance }}" }} is down
+                        runbook_url: https://vshn.github.io/appcat-service-prototype/appcat-service-prototype/runbooks/RedisDown.html
+                    - alert: RedisMissingMaster
+                      expr: (count(redis_instance_info{role="master"}) or vector(0)) < 1
+                      for: 2m
+                      labels:
+                        severity: error
+                      annotations:
+                        summary: Redis missing master (instance {{ "{{ $labels.instance }}" }})
+                        description: >
+                          Redis cluster has no node marked as master.\n  VALUE = {{ "{{ $value }}" }}\n  LABELS = {{ "{{ $labels }}" }}
+                        runbook_url: https://vshn.github.io/appcat-service-prototype/appcat-service-prototype/runbooks/RedisMissingMaster.html
           reclaimPolicy: Delete
           rollbackLimit: 3
       patches:
@@ -183,6 +209,17 @@ spec:
                 # Simulating an older Redis version.
                 # If removed from the map, instances that use this version become unready, unless they pin the composition revision and set `compositionUpdatePolicy=Manual`
                 stable-5: 12.9.0
+        # Alerting enabled
+        - fromFieldPath: spec.parameters.alerts.enabled
+          toFieldPath: spec.forProvider.values.metrics.prometheusRule.enabled
+        - fromFieldPath: spec.parameters.alerts.enabled
+          toFieldPath: spec.forProvider.values.metrics.serviceMonitor.enabled
+          # Unfortunately map-type patches only works with strings, but the Helm chart expects boolean
+            # transforms:
+            #   - type: map
+            #     map:
+            #       guaranteed: "true"
+            #       besteffort: "false"
         # Namespace patches
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: spec.forProvider.namespace

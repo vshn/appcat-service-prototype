@@ -25,7 +25,7 @@ lint: ## All-in-one linting
 	git diff --exit-code
 
 .PHONY: .service-definition
-.service-definition: crossplane-setup k8up-setup
+.service-definition: crossplane-setup k8up-setup prometheus-setup
 	kubectl apply -f crossplane/composite.yaml
 	kubectl apply -f crossplane/composition.yaml
 	kubectl wait --for condition=Offered compositeresourcedefinition/xredisinstances.syn.tools
@@ -47,7 +47,7 @@ deprovision: kind-setup ## Uninstall the service instance
 crossplane-setup: $(crossplane_sentinel) ## Install local Kubernetes cluster and install Crossplane
 
 $(crossplane_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
-$(crossplane_sentinel): $(KIND_KUBECONFIG)
+$(crossplane_sentinel): kind-setup
 	helm repo add crossplane https://charts.crossplane.io/stable
 	helm repo add mittwald https://helm.mittwald.de
 	helm upgrade --install crossplane --create-namespace --namespace crossplane-system crossplane/crossplane --set "args[0]='--debug'" --set "args[1]='--enable-composition-revisions'" --wait
@@ -70,11 +70,27 @@ minio-setup: crossplane-setup ## Install Minio Crossplane implementation
 k8up-setup: minio-setup $(k8up_sentinel) ## Install K8up operator
 
 $(k8up_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
-$(k8up_sentinel): $(KIND_KUBECONFIG)
+$(k8up_sentinel): kind-setup
 	helm repo add appuio https://charts.appuio.ch
 	kubectl apply -f https://github.com/k8up-io/k8up/releases/latest/download/k8up-crd.yaml
 	helm upgrade --install k8up --create-namespace --namespace k8up-system appuio/k8up --wait
 	kubectl -n k8up-system wait --for condition=Available deployment/k8up --timeout 60s
+	@touch $@
+
+.PHONY: prometheus-setup
+prometheus-setup: $(prometheus_sentinel) ## Install Prometheus stack
+
+$(prometheus_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
+$(prometheus_sentinel): kind-setup-ingress
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	helm upgrade --install kube-prometheus \
+		--create-namespace \
+		--namespace prometheus-system \
+		--wait \
+		--values prometheus/values.yaml \
+		prometheus-community/kube-prometheus-stack
+	kubectl -n prometheus-system wait --for condition=Available deployment/kube-prometheus-kube-prome-operator --timeout 120s
+	@echo -e "***\n*** Installed Prometheus in http://127.0.0.1.nip.io:8081/prometheus/ and AlertManager in http://127.0.0.1.nip.io:8081/alertmanager/.\n***"
 	@touch $@
 
 .PHONY: clean

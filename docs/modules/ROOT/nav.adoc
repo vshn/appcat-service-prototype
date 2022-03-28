@@ -16,3 +16,7 @@
 * xref:explanations/sli.adoc[Service Level Indicators]
 * xref:explanations/backup.adoc[Instance Backups]
 * xref:explanations/restore.adoc[Instance Restores]
+
+.Runbooks
+* xref:runbooks/RedisDown.adoc[RedisDown]
+* xref:runbooks/RedisMissingMaster.adoc[RedisMissingMaster]

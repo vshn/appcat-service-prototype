@@ -20,3 +20,4 @@
 .Runbooks
 * xref:runbooks/RedisDown.adoc[RedisDown]
 * xref:runbooks/RedisMissingMaster.adoc[RedisMissingMaster]
+* xref:runbooks/K8upBackupNotRunning.adoc[K8upBackupNotRunning]

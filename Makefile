@@ -67,13 +67,18 @@ minio-setup: crossplane-setup ## Install Minio Crossplane implementation
 	kubectl wait --for condition=Offered compositeresourcedefinition/xs3buckets.syn.tools
 
 .PHONY: k8up-setup
-k8up-setup: minio-setup $(k8up_sentinel) ## Install K8up operator
+k8up-setup: minio-setup prometheus-setup $(k8up_sentinel) ## Install K8up operator
 
 $(k8up_sentinel): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(k8up_sentinel): kind-setup
 	helm repo add appuio https://charts.appuio.ch
 	kubectl apply -f https://github.com/k8up-io/k8up/releases/latest/download/k8up-crd.yaml
-	helm upgrade --install k8up --create-namespace --namespace k8up-system appuio/k8up --wait
+	helm upgrade --install k8up \
+		--create-namespace \
+		--namespace k8up-system \
+		--wait \
+		--values k8up/values.yaml \
+		appuio/k8up
 	kubectl -n k8up-system wait --for condition=Available deployment/k8up --timeout 60s
 	@touch $@
 

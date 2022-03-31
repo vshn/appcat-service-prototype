@@ -31,6 +31,7 @@ spec:
     kind: XRedisInstance
   writeConnectionSecretsToNamespace: crossplane-redis
   resources:
+
     - base:
         apiVersion: v1
         kind: Namespace  # Let the composition manage the namespace, Crossplane will clean it up if deprovisioned
@@ -47,6 +48,7 @@ spec:
         - type: MatchString
           fieldPath: status.phase
           matchString: Active
+
     - base:
         apiVersion: v1
         kind: Secret
@@ -71,6 +73,7 @@ spec:
           fieldPath: data.password
         - type: NonEmpty
           fieldPath: data.repoEncryptionSecret
+
     - connectionDetails:
         - fromConnectionSecretKey: endpoint
         - fromConnectionSecretKey: port
@@ -158,6 +161,22 @@ spec:
                         description: >
                           Redis cluster has no node marked as master.\n  VALUE = {{ "{{ $value }}" }}\n  LABELS = {{ "{{ $labels }}" }}
                         runbook_url: https://vshn.github.io/appcat-service-prototype/appcat-service-prototype/runbooks/RedisMissingMaster.html
+                    # - alert: K8upBackupFailed
+                    #   expr: (sum(kube_job_status_failed) by(job_name, namespace) * on(job_name, namespace) group_right() kube_job_labels{label_k8up_syn_tools_type="backup"}) > 0
+                    #   for: 1m
+                    #   labels:
+                    #     severity: error
+                    #   annotations:
+                    #     summary: Job in {{ "{{ $labels.namespace }}" }} of type {{ "{{ $labels.label_k8up_syn_tools_type }}" }} failed
+                    #     runbook_url: https://vshn.github.io/appcat-service-prototype/appcat-service-prototype/runbooks/K8upBackupFailed.html
+                    - alert: K8upBackupNotRunning
+                      expr: sum(rate(k8up_jobs_total{jobType="backup"}[5m])) by (exported_namespace) == 0 and on(exported_namespace) k8up_schedules_gauge > 0
+                      for: 1m
+                      labels:
+                        severity: error
+                      annotations:
+                        summary: No K8up jobs were run in {{ "{{ $labels.exported_namespace }}" }} within the last 5 minutes. Check the operator, there might be a deadlock
+                        runbook_url: https://vshn.github.io/appcat-service-prototype/appcat-service-prototype/runbooks/K8upBackupNotRunning.html
           reclaimPolicy: Delete
           rollbackLimit: 3
       patches:
@@ -247,6 +266,7 @@ spec:
             - type: string
               string:
                 fmt: "sv-redis-%s"
+
     - base:
         apiVersion: syn.tools/v1
         kind: S3Bucket
@@ -282,7 +302,7 @@ spec:
               name: "" # patched from generated Secret name
               key: repoEncryptionSecret
           backup:
-            schedule: '*/5 * * * *' # this should be randomized in prod
+            schedule: '*/10 * * * *' # this should be randomized in prod
             failedJobsHistoryLimit: 1
             successfulJobsHistoryLimit: 1
           prune:

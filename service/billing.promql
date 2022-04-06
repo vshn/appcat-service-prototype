@@ -1,0 +1,22 @@
+# Sum values over one hour.
+sum_over_time(
+  # Get the base product identifier
+  label_replace(
+    # Get the number of Redis standalone instances with "besteffort" SLA
+    sum by(label_crossplane_io_claim_namespace,label_crossplane_io_claim_name)
+      (kube_namespace_labels{label_service_syn_tools_name="redis",label_service_syn_tools_sla="besteffort", label_service_syn_tools_architecture="standalone"}
+    ),
+    "product",
+    # Combine to full qualifier with some static info
+    "appcat_redis_standalone_besteffort:kind-local-cluster:my-tenant:$1",
+    "label_crossplane_io_claim_namespace",
+    "(.*)"
+  )
+  [59m:1m]
+)
+
+
+# Inspired by:
+# https://github.com/appuio/appuio-cloud-reporting/blob/master/pkg/db/seeds/appuio_cloud_loadbalancer.promql
+# Data model:
+# https://kb.vshn.ch/appuio-cloud/references/architecture/metering-data-flow.html

@@ -37,6 +37,15 @@ spec:
         kind: Namespace  # Let the composition manage the namespace, Crossplane will clean it up if deprovisioned
         metadata:
           name: "" # patched from composite
+          labels:
+            # We will abuse these labels to provide metrics that can be picked up by kube-state-metrics' `kube_secret_labels`.
+            # This will allow us to compute how many minutes an instance is running for billing purposes.
+            # This should be considered a workaround since there could be multiple namespaces involved in a single service, or none at all.
+            # But this serves well for a prototype.
+            service.syn.tools/name: redis
+            service.syn.tools/architecture: standalone
+            service.syn.tools/sla: besteffort # we currently can't switch to "guaranteed" based on whether alerting is enabled
+            service.syn.tools/backups: enabled
       patches:
         - fromFieldPath: metadata.labels[crossplane.io/composite]
           toFieldPath: metadata.name

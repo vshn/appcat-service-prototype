@@ -19,6 +19,7 @@ This will
 1. Install a local Kubernetes cluster with kubernetes-in-docker (`kind`)
 1. Install Crossplane Helm chart
 1. Install Secrets Generator Helm chart (for providing random passwords)
+1. Install Prometheus Operator and a Prometheus instance with AlertManager
 1. Install a CompositeResourceDefinition for the prototype service
 1. Install a Composition for the prototype service
 1. Deploy a service instance of the prototype
@@ -31,6 +32,13 @@ The prototype service is a simple Redis instance.
 To uninstall, either run
 - `make deprovision` to just uninstall the service instance.
 - `make clean` to completely remove the cluster and all artifacts.
+
+## Monitoring
+
+A monitoring stack with Prometheus will also be installed and monitors the Redis instance as well as backups.
+The stack can also be used for billing purposes.
+In `service/billing.promql` is a sample PromQL query that can be used to count how long a certain Redis instance is "provisioned".
+Enter this query in http://127.0.0.1.nip.io:8081/prometheus/ after provisioning.
 
 ## How it works
 

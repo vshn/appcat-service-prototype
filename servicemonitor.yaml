@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-test-counter
+  namespace: default
+  labels:
+    app: prom-test
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 9090
+      targetPort: 9090
+  selector:
+    app: prom-test
+  type: ClusterIP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prom-test-counter
+  namespace: prometheus-system
+  labels:
+    release: kube-prometheus
+spec:
+  endpoints:
+    - path: /metrics
+      port: http
+      scheme: http
+      honorTimestamps: true # important!
+  namespaceSelector:
+    matchNames:
+      - default
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: prom-test

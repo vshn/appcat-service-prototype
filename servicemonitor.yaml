@@ -29,6 +29,7 @@ spec:
       port: http
       scheme: http
       honorTimestamps: true # important!
+      interval: 20s
   namespaceSelector:
     matchNames:
       - default

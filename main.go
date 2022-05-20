@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/push"
 )
 
 /*
@@ -16,6 +18,9 @@ HOW TO RUN
 make prometheus-setup
 export KUBECONFIG=${PWD}/.kind/kind-kubeconfig-v1.23.0 CGO_ENABLED=0
 kubectl apply -f servicemonitor.yaml
+helm -n default upgrade --install pushgateway prometheus-community/prometheus-pushgateway \
+	--values prometheus/pushgateway.yaml
+kubectl -n prometheus-system edit servicemonitor pushgateway-prometheus-pushgateway # set path=/pushgateway/metrics
 
 # deploy image
 go build -o prom main.go
@@ -32,8 +37,13 @@ var decreasingDeltaCounter *TimestampedCounter
 var addingCounter *TimestampedCounter
 var tableCounter *TimestampedCounter
 var stableCounter *TimestampedCounter
+var pushingCounter = promauto.NewCounter(prometheus.CounterOpts{
+	Name: "test_push_total",
+	Help: "Test a counter with pushgateway",
+})
 
 var promHandler = promhttp.Handler()
+var pusher *push.Pusher
 
 var decreasingDelta float64 = 100000
 
@@ -49,8 +59,24 @@ func init() {
 func main() {
 	log.Printf("starting exporter")
 	http.HandleFunc("/metrics", scrapeHandler())
+	go func() {
+		for true {
+			time.Sleep(10 * time.Second)
+			pushToPushgateway()
+		}
+	}()
 	err := http.ListenAndServe(":9090", nil)
 	log.Fatal(err)
+}
+
+func pushToPushgateway() {
+	pushingCounter.Add(1)
+	err := pusher.Push()
+	if err != nil {
+		log.Println(err)
+	} else {
+		log.Println("pushed metrics")
+	}
 }
 
 func recordMetrics() {
@@ -126,6 +152,9 @@ func setupMetrics() {
 	collector.AddMetric(stableCounter.TimestampedMetric)
 
 	prometheus.MustRegister(collector)
+
+	pusher = push.New("http://pushgateway-prometheus-pushgateway:9091/pushgateway/", "test-job").
+		Collector(pushingCounter).Grouping("region", "rma")
 }
 
 func NewTimestampedCounter(opts prometheus.Opts) *TimestampedCounter {

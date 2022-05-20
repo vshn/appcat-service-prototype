@@ -1,0 +1,17 @@
+ingress:
+  enabled: true
+  hosts:
+    - 127.0.0.1.nip.io
+  path: /pushgateway/
+
+extraArgs:
+- --web.route-prefix=/pushgateway/
+
+serviceMonitor:
+  enabled: true
+  namespace: prometheus-system
+
+liveness:
+  enabled: false
+readiness:
+  enabled: false

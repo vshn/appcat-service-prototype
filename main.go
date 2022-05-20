@@ -31,7 +31,6 @@ kubectl run --image local.dev/vshn/appcat-service-prototype:prom --port 9090 pro
 var decreasingDeltaCounter *TimestampedCounter
 var addingCounter *TimestampedCounter
 var tableCounter *TimestampedCounter
-var stableCounter *TimestampedCounter
 
 var promHandler = promhttp.Handler()
 
@@ -39,8 +38,6 @@ var decreasingDelta float64 = 100000
 
 var table = []float64{100, 120, 0, 140, 200, 150, 0, 10, 110, 80}
 var tableIndex = 0
-var stableValue = 100.0
-var stableTimestamp = time.Now().UTC().Add(time.Minute * -1).Truncate(time.Minute)
 
 func init() {
 	setupMetrics()
@@ -54,7 +51,7 @@ func main() {
 }
 
 func recordMetrics() {
-	decreasingDeltaCounter.Add(decreasingDelta)
+	decreasingDeltaCounter.AddWithTimestamp(decreasingDelta, time.Date(2022, 12, 2, 12, 54, 31, 0, time.UTC))
 	decreasingDelta /= 2
 	addingCounter.Add(10)
 	tableCounter.Add(table[tableIndex])
@@ -62,19 +59,6 @@ func recordMetrics() {
 		tableIndex = 0
 	} else {
 		tableIndex += 1
-	}
-
-	// this "stable" counter allows us to return an aggregated value that is from the past.
-	// Example: suppose we get the average storage capacity used only for a full day, the exporter would not be able to provide a snapshot value,
-	// but only the value that covers the full day of "yesterday". We need to add a timestamp (preferably at midnight at the end) so that Prometheus knows
-	// it's a fixed value from the past and can reflect that in the scrapes.
-	newStable := time.Now().UTC().Truncate(time.Minute)
-	if newStable.After(stableTimestamp) {
-		// only every new full minute we add to the counter.
-		// we can only increase a counter's value if the timestamp changes with it, otherwise Prometheus server drops it with an error like
-		//  msg="Error on ingesting samples with different value but same timestamp" num_dropped=1
-		stableCounter.AddWithTimestamp(stableValue, newStable)
-		stableTimestamp = newStable
 	}
 }
 
@@ -115,15 +99,10 @@ func setupMetrics() {
 		Help: "Custom test metric to test counters and resets. Picks a value from a table and adds to counter, next scrape picks another row. At the end it begins anew.",
 		Name: "test_table_total",
 	})
-	stableCounter = NewTimestampedCounter(prometheus.Opts{
-		Help: "Custom test metric to test counters and resets. It changes once only every new hour, and the timestamp is at the beginning of the new hour",
-		Name: "test_stable_total",
-	})
 
 	collector.AddMetric(decreasingDeltaCounter.TimestampedMetric)
 	collector.AddMetric(addingCounter.TimestampedMetric)
 	collector.AddMetric(tableCounter.TimestampedMetric)
-	collector.AddMetric(stableCounter.TimestampedMetric)
 
 	prometheus.MustRegister(collector)
 }
